@@ -1,0 +1,9 @@
+// Default TPL database.
+// This file was automatically generated. Editing is discouraged but not prohibited.
+// Add a custom package by making a TPL JSON file and adding it to this list with a package name.
+// Alternatively, run the command (tpl addpkg *packagename*.json).
+
+(database)
+rust = rust.json;
+cargo = cargo.json;
+
