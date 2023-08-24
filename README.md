@@ -1,5 +1,9 @@
 ## Advanced Portable Package Loader
-APPL is a fantasy (as in non-viable for a flagship distro release) package manager.
+APPL is a package manager with extensive support for AppImages and custom packages.
+
+## Why?
+I created `appl` after finding that there was difficulty in efficiently and automatically managing AppImages.
+(yes, cURL and wget arent unusable, but this is intended at a beginner *nix user.)
 
 ### *APPL is not supported on Windows.*
 Support for Windows is not, and will probably never be, on the roadmap. I *may* look into MacOS/OSX support.
@@ -23,4 +27,5 @@ Making an APPL package (called a fruit) is *really* easy. Make a single JSON fil
     }
 }
 ```
+Save the file as a fruit (*packagename*.fruit.json)
 

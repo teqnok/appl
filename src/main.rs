@@ -3,9 +3,9 @@ use dialoguer::Confirm;
 use indicatif::{ProgressBar, DecimalBytes};
 
 fn main() {
-    let matches = Command::new("tpl")
-        .about("Fantasy package manager")
-        .version("0.0.1-dev")
+    let matches = Command::new("appl")
+        .about("AppImage Package Manager")
+        .version("0.2.4-alpha")
         .subcommand_required(false)
         .arg_required_else_help(true)
         .author("teqnok")
@@ -17,6 +17,16 @@ fn main() {
                 Arg::new("package").index(1).action(ArgAction::Set)
             )
         )
+        .subcommand(
+            Command::new("verify")
+            .about("Verify checksums of installed AppImages")
+            .arg (
+                Arg::new("type").index(1).action(ArgAction::Set)
+            )
+            .arg (
+                Arg::new("package").index(2).action(ArgAction::Set)
+            )
+        )
 
         .subcommand(
             Command::new("remove")
@@ -24,6 +34,11 @@ fn main() {
             .arg(
                 Arg::new("package").index(1).action(ArgAction::Set)
             )
+        )
+        .subcommand(
+            Command::new("publish")
+            .about("Request to add an AppImage to the registry")
+            .long_about("When a package is submitted, various malware tests are run on the provided file.")
         )
 
         .subcommand(

@@ -7,3 +7,5 @@ This is a list of steps required to mature APPL to full maturity, not in any par
 - Progress bar for downloads
 - Package Groups (very high priority)
 - Ability to download multiple packages at once
+- Add checksum verifying 
+- Gather a small library of AppImages for distribution
