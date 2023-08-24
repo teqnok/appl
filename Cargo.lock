@@ -52,6 +52,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "appl"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "dialoguer",
+ "indicatif",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -381,17 +392,6 @@ dependencies = [
  "redox_syscall",
  "rustix",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "tpl"
-version = "0.1.0"
-dependencies = [
- "clap",
- "dialoguer",
- "indicatif",
- "serde",
- "serde_json",
 ]
 
 [[package]]

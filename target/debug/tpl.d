@@ -1,1 +1,1 @@
-/run/media/teqnok/android/tpl/target/debug/tpl: /run/media/teqnok/android/tpl/src/main.rs
+/home/teqnok/Documents/GitHub/tpl/target/debug/tpl: /home/teqnok/Documents/GitHub/tpl/src/main.rs
