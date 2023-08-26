@@ -5,6 +5,7 @@ APPL is a package manager with extensive support for AppImages and custom packag
 I created `appl` after finding that there was difficulty in efficiently and automatically managing AppImages.
 I also wanted to create an AUR-like platform on Fedora.
 (yes, cURL and wget arent unusable, but this is intended at a beginner *nix user.)
+NixOS's reproducibility was the inspiration for the custom packages and repos.
 
 ### *APPL is not supported on Windows.*
 Support for Windows is not, and will probably never be, on the roadmap. I *may* look into MacOS/OSX support.
