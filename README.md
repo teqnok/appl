@@ -3,6 +3,7 @@ APPL is a package manager with extensive support for AppImages and custom packag
 
 ## Why?
 I created `appl` after finding that there was difficulty in efficiently and automatically managing AppImages.
+I also wanted to create an AUR-like platform on Fedora.
 (yes, cURL and wget arent unusable, but this is intended at a beginner *nix user.)
 
 ### *APPL is not supported on Windows.*
@@ -27,5 +28,5 @@ Making an APPL package (called a fruit) is *really* easy. Make a single JSON fil
     }
 }
 ```
-Save the file as a fruit (*packagename*.fruit.json)
+Save the file as a fruit (*packagename*.fruit.json) and publish it to the registry with `appl pubpkg *directory name*` 
 

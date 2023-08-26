@@ -3,3 +3,5 @@ I will not collect any data (including basic telemetry like kernel version and h
 
 ### You are completely anonymous
 Any data will be submitted under a randomized UUID. Said UUID will reset immediately after every submission and is only used for linking data to diagnose and extinguish critical issues.
+
+Any and all data may be deleted at any time, for any reason. You dont need to provide any information to delete data. To request deletion, run `appl uuid` to get your current UUID and `appl reqdel *uuid*` to request deletion.
