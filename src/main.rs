@@ -1,16 +1,24 @@
+use appl::clear;
 use clap::{Arg, ArgAction, Command, error::ErrorKind};
-use dialoguer::Confirm;
 use indicatif::{ProgressBar, DecimalBytes};
+use std::fs;
+use whoami;
 
-macro_rules! getpkg {
-    () => {
-        
-    };
-}
-
+use crate::prompt::{password_input, create_password};
+mod prompt; 
 fn main() {
+    clear();
+    // Read config file to see if appl has run before, creates one and exits if not
+    let CURRENT_USER: String = whoami::username();
+    let CONFIG_PATH: String = format!("/home/{CURRENT_USER}/.config/appl/appl.txt");
+    println!("DEBUG: Config path: {}", CONFIG_PATH);
+    let data = fs::read_to_string(CONFIG_PATH);
+    let input = create_password("Create a PIN to install packages", "Repeat the PIN");
+    println!("{}",input);
+
+    // Define the `appl` command
     let matches = Command::new("appl")
-        .about("AppImage Package Manager")
+        .about("Portable Package Manager")
         .version("0.2.4-alpha")
         .subcommand_required(false)
         .arg_required_else_help(true)
@@ -99,7 +107,7 @@ fn main() {
                     .map(|s| s.as_str())
                     .collect();
                 
-                println!("Installing {:?}", install_matches);
+                println!("Installing {:?}", packages);
                 
             },
             Some(("query", query_matches)) => {

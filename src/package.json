@@ -1,8 +1,0 @@
-{  
-    "root": {
-        "name": "rust",
-        "description": "The Rust Programming Language",
-        "version": "1.71.0",
-        "size": "77.6M"
-    }
-}
