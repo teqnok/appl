@@ -18,7 +18,8 @@ Making an APPL package (called a fruit) is *really* easy. Make a single JSON fil
         "name": "foo",
         "author": "john",
         "version": "1.0.0dev", // semver
-        "size": [77, 150] // [int,int]: Download size of package (in MB, not MiB), followed by total install size.
+        "size": [77, 150], // [int,int]: Download size of package (in MB, not MiB), followed by total install size.
+        "arch": "amd64" // Architecture of package, defaults to amd64 (x86_64)
     },
     "install": {
         "destination": "/usr/share/foo/", // path: Where should the package install to? default /usr/share/(package name)
@@ -29,5 +30,5 @@ Making an APPL package (called a fruit) is *really* easy. Make a single JSON fil
     }
 }
 ```
-Save the file as a fruit (*packagename*.fruit.json) and publish it to the registry with `appl pubpkg *directory name*` 
+Save the file as a fruit (*packagename*.fruit.json) and publish it to the local registry with `appl load *directory name*` 
 
