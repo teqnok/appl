@@ -1,26 +1,40 @@
-use appl::clear;
-use clap::{Arg, ArgAction, Command, error::ErrorKind};
-use indicatif::{ProgressBar, DecimalBytes};
-use std::fs;
+//------------------------------------------------------------------------------
+//              Advanced Portable Package Loader
+//           Developed by teqnok [teqnok@proton.me] 
+//      Released in the public domain via the Unlicense
+//------------------------------------------------------------------------------
+
+use appl::{clear, Package, Branch, Architecture, install_package, read_build_script, collect_input, list_packages};
+use clap::{Arg, ArgAction, Command};
+use std::{fs, path::Path};
 use whoami;
 
-use crate::prompt::{password_input, create_password};
-mod prompt; 
+use crate::setup::setup;
+
+mod prompt;
+mod setup; 
 fn main() {
-    clear();
-    // Read config file to see if appl has run before, creates one and exits if not
-    let CURRENT_USER: String = whoami::username();
-    let CONFIG_PATH: String = format!("/home/{CURRENT_USER}/.config/appl/appl.txt");
-    println!("DEBUG: Config path: {}", CONFIG_PATH);
-    let data = fs::read_to_string(CONFIG_PATH);
-    let input = create_password("Create a PIN to install packages", "Repeat the PIN");
-    println!("{}",input);
+    // DEBUG CODE ----- NOT FOR PROD BUILDS
+    // END DEBUG
+    let current_user: String = whoami::username();
+    // These lines check for a config file that doesnt exist, will fix. TODO 
+    let config_path: String = format!("/home/{current_user}/.config/appl/");
+    match Path::new(&config_path).try_exists() {
+        Ok(true) => {},
+        Ok(false) => {
+            setup();
+        },
+        Err(e) => {
+            println!("Caught exception when looking for config file: {:?}", e)
+        }
+    }
 
     // Define the `appl` command
     let matches = Command::new("appl")
         .about("Portable Package Manager")
         .version("0.2.4-alpha")
         .subcommand_required(false)
+        // This should be false for dev and true for prod
         .arg_required_else_help(true)
         .author("teqnok")
 
@@ -101,30 +115,22 @@ fn main() {
         
         match matches.subcommand() {
             Some(("install", install_matches)) => {
-                let packages: Vec<_> = install_matches
-                    .get_many::<String>("package")
-                    .expect("is present")
-                    .map(|s| s.as_str())
-                    .collect();
+                let packages = collect_input(install_matches);
                 
-                println!("Installing {:?}", packages);
+                println!("Searching for {}...", packages[0]);
+                read_build_script(packages[0]).expect(":)");
                 
             },
             Some(("query", query_matches)) => {
-                let packages: Vec<_> = query_matches
-                    .get_many::<String>("package")
-                    .expect("is present")
-                    .map(|s| s.as_str())
-                    .collect();
+                let packages = collect_input(query_matches);
                 println!("Searching for {:?}", packages);
             },
             Some(("remove", remove_matches)) => {
-                let packages: Vec<_> = remove_matches
-                    .get_many::<String>("package")
-                    .expect("is present")
-                    .map(|s| s.as_str())
-                    .collect();
+                let packages = collect_input(remove_matches);
                 println!("Uninstalling packages {:?}", packages)
+            },
+            Some(("list", _list_matches)) => {
+                list_packages().expect(":)");
             }
             _ => todo!(""),
         }
