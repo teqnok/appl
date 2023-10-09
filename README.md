@@ -2,8 +2,8 @@
 APPL is a package manager with extensive support for AppImages and custom packages.
 
 ## Why?
-I created `appl` after finding that there was difficulty in efficiently and automatically managing AppImages.
-I also wanted to create an AUR-like platform on Fedora.
+I created `appl` after finding that there was difficulty in having a completely custom repository with *your* packages.
+I also wanted to create a way to add TUIs for some scenarios that needed them (like ROMs or Minecraft mods)
 (yes, cURL and wget arent unusable, but this is intended at a beginner *nix user.)
 NixOS's reproducibility was the inspiration for the custom packages and repos.
 
