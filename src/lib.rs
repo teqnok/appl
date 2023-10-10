@@ -21,20 +21,27 @@ pub enum Branch {
     beta,
     nightly
 }
+
+pub struct Version {
+    major: u8,
+    minor: u8,
+    patch: u8,
+}
+
 pub struct Package {
     arch: Architecture,
     branch: Branch,
     name: String,
+    version: Version
 }
 impl Package {
-    pub fn new(arch_input: Architecture, branch_input: Branch, name_input: String) -> Package {
-        return Package { arch: arch_input, branch: branch_input, name: name_input }
+    pub fn new(arch_input: Architecture, branch_input: Branch, name_input: String, version_input: Version) -> Package {
+        Package { arch: arch_input, branch: branch_input, name: name_input, version: version_input }
     }
 }
 //----------------------------
 // Clear terminal
 pub fn clear() {
-    Package::new(Architecture::X64, Branch::dev, String::from("vim"));
     assert!( std::process::Command::new("cls").status().or_else(|_| std::process::Command::new("clear").status()).unwrap().success() );
 }
 
