@@ -4,7 +4,7 @@
 //      Released in the public domain via the Unlicense
 //------------------------------------------------------------------------------
 
-use appl::{clear, Package, Branch, Architecture, install_package, read_build_script, collect_input, list_packages};
+use appl::{clear, Package, Branch, Architecture, install_package, read_build_script, collect_input, list_packages, check_for_package};
 use clap::{Arg, ArgAction, Command};
 use std::{fs, path::Path};
 use whoami;
@@ -123,7 +123,8 @@ fn main() {
             },
             Some(("query", query_matches)) => {
                 let packages = collect_input(query_matches);
-                println!("Searching for {:?}", packages);
+                println!("Searching for {:?}", packages[0]);
+                let _ = check_for_package(packages[0]);
             },
             Some(("remove", remove_matches)) => {
                 let packages = collect_input(remove_matches);

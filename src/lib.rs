@@ -5,6 +5,7 @@
 
 use std::path::Path;
 use std::process::Command;
+use colored::Colorize;
 //----------------------------
 // Define supported architectures and branches for a package 
 pub enum Architecture {
@@ -117,17 +118,18 @@ pub fn list_packages() -> std::io::Result<()> {
     let entries = fs::read_dir(config_path)?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, std::io::Error>>()?;
-
+    println!("[Uninstalled (build scripts found)]");
     for entry in entries {
 
         let file_name = entry.file_name().and_then(|s| s.to_str());
         match file_name {
-            Some(name) => println!("{:#?}", name),
+            Some(name) => println!("{}", name.green()),
             None => println!("Could not get file name")
         }
 
     }
     Ok(())
+
 }
 
 pub fn check_for_package(input: &str) -> std::io::Result<()> {
@@ -142,9 +144,10 @@ pub fn check_for_package(input: &str) -> std::io::Result<()> {
 
     for entry in entries {
         let entry_str: String = entry.to_string_lossy().to_string();
-        
+        println!("{:?}", entry.file_name());
     }
     println!("Could not find package. Are you using the right registry?");
+
     
 
     Ok(())
