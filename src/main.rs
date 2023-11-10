@@ -1,29 +1,31 @@
 //------------------------------------------------------------------------------
 //              Advanced Portable Package Loader
-//           Developed by teqnok [teqnok@proton.me] 
+//           Developed by teqnok [teqnok@proton.me]
 //      Released in the public domain via the Unlicense
 //------------------------------------------------------------------------------
 
-use appl::{clear, Package, Branch, Architecture, install_package, read_build_script, collect_input, list_packages, check_for_package};
+use appl::{clear, collect_input, install_package, new_package};
 use clap::{Arg, ArgAction, Command};
+use colored::Colorize;
+use script::read_build_script;
 use std::{fs, path::Path};
 use whoami;
 
 use crate::setup::setup;
-
+mod help;
+mod pkgutils;
 mod prompt;
-mod setup; 
+mod script;
+mod setup;
 fn main() {
-    // DEBUG CODE ----- NOT FOR PROD BUILDS
-    // END DEBUG
+    read_build_script::<String>("/home/teqnok/.config/appl/vim.toml".into());
     let current_user: String = whoami::username();
-    // These lines check for a config file that doesnt exist, will fix. TODO 
-    let config_path: String = format!("/home/{current_user}/.config/appl/");
-    match Path::new(&config_path).try_exists() {
-        Ok(true) => {},
+    // These lines check for a config file that doesnt exist, will fix. TODO
+    match Path::new(&format!("/home/{current_user}/.config/appl/")).try_exists() {
+        Ok(true) => {}
         Ok(false) => {
             setup();
-        },
+        }
         Err(e) => {
             println!("Caught exception when looking for config file: {:?}", e)
         }
@@ -32,107 +34,92 @@ fn main() {
     // Define the `appl` command
     let matches = Command::new("appl")
         .about("Portable Package Manager")
-        .version("0.2.4-alpha")
+        .version("0.6.2-alpha")
         .subcommand_required(false)
         // This should be false for dev and true for prod
-        .arg_required_else_help(true)
-        .author("teqnok")
-
+        .arg_required_else_help(false)
+        .override_help(help::HELP)
+        .author("teqnok [teqnok@proton.me]")
         .subcommand(
             Command::new("install")
-            .about("Install a package from the loaded database")
-            .arg(
-                Arg::new("package").index(1).action(ArgAction::Set)
-            )
+                .about("Install a package from the loaded database")
+                .arg_required_else_help(true)
+                .arg(
+                    Arg::new("package")
+                        .index(1)
+                        .num_args(1..10)
+                        .action(ArgAction::Set),
+                ),
+        )
+        .subcommand(
+            Command::new("new")
+                .about("Create a new TOML Script from prompts")
+                .arg_required_else_help(false),
         )
         .subcommand(
             Command::new("verify")
-            .about("Verify checksums of installed AppImages")
-            .arg (
-                Arg::new("type").index(1).action(ArgAction::Set)
-            )
-            .arg (
-                Arg::new("package").index(2).action(ArgAction::Set)
-            )
+                .about("Verify checksums of installed packages")
+                .arg(Arg::new("type").index(1).action(ArgAction::Set))
+                .arg(Arg::new("package").index(2).action(ArgAction::Set)),
         )
-
-        .subcommand(
-            Command::new("reqdel")
-            .about("Request deletion of data")
-            .arg ( 
-                Arg::new("uuid").index(1).action(ArgAction::Set)
-            )
-        )
-
         .subcommand(
             Command::new("config")
-            .arg (
-                Arg::new("option").index(1).action(ArgAction::Set)
-            )
-            .arg (
-                Arg::new("value").index(2).action(ArgAction::Set)
-            )
+                .arg(Arg::new("option").index(1).action(ArgAction::Set))
+                .arg(Arg::new("value").index(2).action(ArgAction::Set)),
         )
-
         .subcommand(
             Command::new("remove")
-            .about("Uninstall a package")
-            .arg(
-                Arg::new("package").index(1).action(ArgAction::Set)
-            )
+                .about("Uninstall a package")
+                .arg(Arg::new("package").index(1).action(ArgAction::Set)),
         )
         .subcommand(
-            Command::new("publish")
-            .about("Request to add an AppImage to the registry")
-            .long_about("When a package is submitted, various malware tests are run on the provided file.")
+            Command::new("run")
+                .about("Execute/open a specified package")
+                .long_about(
+                    "May have to infer what to open a file with, and may not work with mods.",
+                )
+                .arg(Arg::new("")),
         )
         .subcommand(
             Command::new("list")
-            .about("List all currently installed packages containing input characters. Basically, grep for your packagelist.")
-            .arg(
-                Arg::new("regex").index(1).action(ArgAction::Set)
-            )
+                .about("List all currently installed packages containing input characters.")
+                .arg(Arg::new("regex").index(1).action(ArgAction::Set)),
         )
+        .subcommand(Command::new("setup").about("Enter the applsetup tool"))
         .subcommand(
             Command::new("discover")
-            .about("Search the local database for packages")
-            .arg(
-                Arg::new("package").index(1).action(ArgAction::Set)
-            )
+                .about("Search the local database for packages")
+                .arg(Arg::new("package").index(1).action(ArgAction::Set)),
         )
         // Query subcommand
         .subcommand(
             Command::new("query")
-            .about("Show information about the given package")
-            .arg(
-                Arg::new("package").index(1).action(ArgAction::Set)
-            )
+                .about("Show information about the given package")
+                .arg(Arg::new("package").index(1).action(ArgAction::Set)),
         )
-
         .get_matches();
-    
-        
-        
-        match matches.subcommand() {
-            Some(("install", install_matches)) => {
-                let packages = collect_input(install_matches);
-                
-                println!("Searching for {}...", packages[0]);
-                read_build_script(packages[0]).expect(":)");
-                
-            },
-            Some(("query", query_matches)) => {
-                let packages = collect_input(query_matches);
-                println!("Searching for {:?}", packages[0]);
-                let _ = check_for_package(packages[0]);
-            },
-            Some(("remove", remove_matches)) => {
-                let packages = collect_input(remove_matches);
-                println!("Uninstalling packages {:?}", packages)
-            },
-            Some(("list", _list_matches)) => {
-                list_packages().expect(":)");
-            }
-            _ => todo!(""),
+
+    match matches.subcommand() {
+        Some(("install", install_matches)) => {
+            let packages = collect_input(install_matches);
+            println!("Searching for {} packages...", packages.len());
+            install_package(packages.clone()).expect(":)");
         }
+        Some(("query", query_matches)) => {
+            let packages = collect_input(query_matches);
+            println!("Searching for {:?}", packages[0].green());
+        }
+        Some(("new", _new_matches)) => {
+            new_package();
+        }
+        Some(("remove", remove_matches)) => {
+            let packages = collect_input(remove_matches);
+            println!("Uninstalling packages {:?}", packages[0].green())
+        }
+        Some(("list", _list_matches)) => {}
+        Some(("setup", _setup_matches)) => {
+            setup();
+        }
+        _ => help::print_help(),
     }
+}
