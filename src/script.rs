@@ -5,8 +5,9 @@ use std::{
     error::Error,
     fs::File,
     io::BufReader,
-    path::PathBuf,
+    path::{PathBuf, Path},
 };
+use colored::Colorize;
 use tar::*;
 #[allow(non_camel_case_types)]
 const VARIABLES: [&'static str; 5] = ["@pkgsrc", "@pkgdir", "@home", "", ""];
@@ -44,7 +45,12 @@ pub enum Variables {
 // TODO introduce variables for the script to use
 // TODO work with repositories
 pub fn read_build_script<T: ToString>(file: T) {
-    let toml = read_toml(file.to_string()); 
+    let p = file.to_string();
+    let path = Path::new(&p);
+    let pkgname = path.file_stem().unwrap().to_str().unwrap();
+    println!("{}{} {}", "=".blue(), ">".green(), pkgname.green().bold());
+
+    let toml = read_toml(p); 
     let toml_keys: toml::Value = toml::from_str(&toml).unwrap(); // Deserialize the toml file into keys
     let script: Vec<String> = toml_keys["build"] // Get the build() function of a build script
         .as_array()
@@ -81,6 +87,9 @@ pub fn read_build_script<T: ToString>(file: T) {
                 // Halfway done, just need 7z and rar.
                 continue
             },
+            "get-file" => {
+                download_file(&command[1],  &command[2], command[3].green()).unwrap();
+            }
             "load" => {
                 // Will allow for external scripts to run inside the script (say setting up lua, then neovim)
                 continue
@@ -93,7 +102,8 @@ pub fn read_build_script<T: ToString>(file: T) {
 
 
 use std::io::Read;
-use std::path::Path;
+
+use crate::pkgutils::download_file;
 
 fn read_toml(file: String) -> String {
     let path = Path::new(&file);

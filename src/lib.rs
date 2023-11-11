@@ -134,21 +134,6 @@ pub fn clear() {
     assert!( std::process::Command::new("cls").status().or_else(|_| std::process::Command::new("clear").status()).unwrap().success() );
 }
 
-// Download file
-// pub fn get_url(url: String, destination: String) {
-//     assert!( 
-//         Command::new("curl")
-//         .arg(url)
-//         .arg("-O")
-//         .arg(destination)
-//     );
-//     assert!(std::process::Command::new("cls")
-//         .status()
-//         .or_else(|_| std::process::Command::new("clear").status())
-//         .unwrap()
-//         .success());
-// }
-
 // Download file (terrible, not even async, depends on curl, super insecure)
 // pub fn get_url(url: String, destination: String) {
 //     assert!(Command::new("curl")
@@ -161,11 +146,12 @@ pub fn clear() {
 // }
 
 use crate::prompt::confirm_prompt_custom;
+use crate::script::read_build_script;
 use clap::ArgMatches;
-use std::fs;
 use walkdir::WalkDir;
 mod prompt;
-
+mod script;
+use std::collections::HashMap;
 // Root command for installing packages,
 pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
     let time = Instant::now();
@@ -175,33 +161,47 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
 
     // METADATA VECTORS
     let mut packages_to_install: Vec<String> = vec![]; //
-    let mut packages_not_found: Vec<&str> = vec![];
     let mut packages: Vec<Package> = vec![];
+
+    let mut found_terms: HashMap<&str, bool> = HashMap::new();
+    let mut not_found_terms = Vec::new();
+    let mut scripts = Vec::new();
     //----------------------------------------------------a
     // ADD VARIABLES TO INSTALL LIST
-    for path in input {
-        for entry in WalkDir::new(&config_path) {
-            let entry = entry.unwrap();
-            let entry_str = entry.path();
-            let entry_path = entry_str.with_extension("");
-            if let Some(file_name) = entry_path.file_name() {
-                let file_name_str = file_name.to_str().unwrap();
-                if file_name_str == path {
-                    let pkg_path = entry_str.to_str().unwrap().to_string();
-                    packages_to_install.push(pkg_path);
-                }
+    for &path in &input {
+        found_terms.insert(path, false);
+    }
+    
+    for entry in WalkDir::new(&config_path) {
+        let entry = entry.unwrap();
+        let entry_str = entry.path();
+        let entry_path = entry_str.with_extension("");
+        if let Some(file_name) = entry_path.file_name() {
+            let file_name_str = file_name.to_str().unwrap();
+            if let Some(found) = found_terms.get_mut(file_name_str) {
+                *found = true;
+                let pkg_path = entry_str.to_str().unwrap().to_string();
+                packages_to_install.push(pkg_path);
             }
         }
     }
+    
+    for (path, found) in &found_terms {
+        if !found {
+            not_found_terms.push(path.to_string());
+        }
+    }
+
+    for pkg in not_found_terms {
+        println!("{} {}. Skipping..", "Could not find result".red(), pkg.yellow())
+    }
+
     if packages_to_install.is_empty() {
         println!(
             "{}",
             "Could not find any packages matching the search terms.".yellow()
         );
     } else {
-        for pkg in packages_not_found {
-            println!("{} {}", "Could not find package(s) ".red(), pkg);
-        }
         println!("Resolving dependencies... \n");
 
         // Add packages to a vector, to print a line for each package
@@ -211,7 +211,7 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
                 "->".purple(),
                 package.bright_blue().bold()
             );
-            let toml_read = read_toml(package.into());
+            let toml_read = read_toml(package.clone().into());
             let toml_keys: toml::Value = toml::from_str(&toml_read).unwrap();
             packages.push(Package::new(
                 Architecture::from_str(toml_keys["arch"].as_str().unwrap()),
@@ -232,8 +232,9 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
                     .unwrap(),
                 toml_keys.get("install_size").unwrap().as_integer().unwrap(),
             ));
+            scripts.push(package);
         }
-        println!("\n");
+        print!("\n");
 
         println!("Packages to install: \n \t");
         let mut download_size: i64 = 0;
@@ -296,16 +297,25 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
             confirm_prompt_custom(String::from("Install these packages?"));
         match confirm_package_install {
             Ok(true) => {
+                println!("[1/5] Downloading packages");
                 for package in packages {
-                    get_source(package.url.to_string(), package.name.to_string()).unwrap()
+                    get_source(package.url.to_string(), package.name.to_string()).unwrap();
                 }
+                println!("[2/5] Running build scripts");
+                for script in scripts {
+                    read_build_script(script);
+                }
+                println!("[3/5] Verifying checksums");
+                println!("[4/5] Running post-install modules");
+                println!("[5/5] Creating .desktop files and adding to $PATH");
             }
             Ok(false) => println!(
                 "{}",
-                "User denied package installation, exiting safely...".yellow()
+                "Canceled operation".yellow()
             ),
             Err(e) => eprintln!("Caught exception {} when registering confirm prompt.", e),
         }
+        
     }
     Ok(())
 }

@@ -5,6 +5,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::header::CONTENT_LENGTH;
 use std::error::Error;
 use std::io::Write;
+use std::path::Path;
 use std::path::PathBuf;
 #[tokio::main]
 // Downloading function. (sends a HTTP GET request to a URL and saves it to the $path var)
@@ -17,7 +18,7 @@ pub async fn download_file(
     let url = url.trim_matches('"');
     // Create a reqwest client
     let client = reqwest::Client::new();
-
+    let new_path = PathBuf::from(path);
     // Send a GET request to the file URL
     let response = client.get(url).send().await?;
     // Get the total size of the file from the Content-Length header
@@ -41,8 +42,8 @@ pub async fn download_file(
     );
     pb.set_message(format!("{}{} {}", "=".blue(), ">".green(), name));
     // Open the file in write-only mode
-    std::fs::create_dir_all(path)?;
-    let mut file = std::fs::File::create(format!("{path}/file"))?;
+    std::fs::create_dir_all(new_path.parent().unwrap())?;
+    let mut file = std::fs::File::create(path)?;
 
     // Read the response body in chunks
     let mut stream = response.bytes_stream();
