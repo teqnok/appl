@@ -5,7 +5,7 @@ use std::{
     error::Error,
     fs::File,
     io::BufReader,
-    path::{PathBuf, Path},
+    path::{PathBuf, Path}, collections::HashMap,
 };
 use colored::Colorize;
 use tar::*;
@@ -45,6 +45,7 @@ pub enum Variables {
 // TODO introduce variables for the script to use
 // TODO work with repositories
 pub fn read_build_script<T: ToString>(file: T) {
+    let mut defined_vars: HashMap<String, String> = HashMap::new();
     let p = file.to_string();
     let path = Path::new(&p);
     let pkgname = path.file_stem().unwrap().to_str().unwrap();
@@ -64,12 +65,18 @@ pub fn read_build_script<T: ToString>(file: T) {
         .map(|command| command.split_whitespace().map(|s| s.to_string()).collect())
         .collect();
 
-    for command in script_split {
+    for mut command in script_split {
         
         match command[0].as_str() { // Match the command and execute it accordingly. TODO make this more secure and maybe async (may cause a race condition or panics)
             "print" => { // pretty self explanatory here man
+                if defined_vars.contains_key(&command[1]) {
+                    command[1] = defined_vars.get(&command[1]).unwrap().to_string();
+                };
                 println!("{}", command[1]);
                 continue
+            },
+            "define" => {
+                defined_vars.insert(command[1].clone(), command[2].clone()); 
             },
             "make" => { // Executes CMake/Make in the specified directory. 
                 let path = command[1].as_str();
