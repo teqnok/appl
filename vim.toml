@@ -1,3 +1,5 @@
+# appl example toml script
+
 # Package name. All-lowercase names are preferred.
 name = "vim"
 # The version of a package. Use a SemVer. 
@@ -12,10 +14,11 @@ arch = "X64"
 dependencies = []
 # Download size of package, in MB.
 download_size = 7
-# Once downloaded, how large is your package?
+# Total install size, **without** dependencies
 install_size = 9
 # URL to source code from/download.
 url="https://github.com/vim/vim/archive/refs/tags/v9.0.2048.zip"
+# Build function 
 build = [
     "print hi"
 ]
