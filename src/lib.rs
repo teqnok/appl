@@ -8,6 +8,7 @@
 use colored::Colorize;
 use pkgutils::{download_file, read_repos};
 use prompt::{int_input, prompt_input, select_prompt, select_prompt_string};
+use std::error::Error;
 use std::fmt::{self, Display};
 use std::io::Read;
 use std::process::Command;
@@ -145,7 +146,7 @@ mod prompt;
 mod script;
 use std::collections::HashMap;
 // Root command for installing packages,
-pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
+pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error>> {
     let time = Instant::now();
     // DEFINE VARIABLES
     let current_user: String = whoami::username(); //
@@ -194,17 +195,20 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
             "Could not find any packages matching the search terms.".yellow()
         );
     } else {
-        println!("Resolving dependencies... \n");
 
         // Add packages to a vector, to print a line for each package
         for package in packages_to_install {
             println!(
-                "{} Build script found at: {}",
+                "{} Package found at: {}",
                 "->".purple(),
                 package.bright_blue().bold()
             );
             let toml_read = read_toml(package.clone().into());
-            let toml_keys: toml::Value = toml::from_str(&toml_read).unwrap();
+            let toml_keys: Result<toml::Value, toml::de::Error> = toml::from_str(&toml_read);
+            let toml_keys = toml_keys.map_err(|e| {
+                println!("{}{}", "Failed to parse TOML script. Either repair the script or use a different package. \n".yellow(),e.to_string().yellow());
+                std::io::Error::new(std::io::ErrorKind::Other, e)
+            })?;
             packages.push(Package::new(
                 Architecture::from_str(toml_keys["arch"].as_str().unwrap()),
                 Branch::from_str(toml_keys["branch"].as_str().unwrap()),
@@ -294,7 +298,9 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
                     get_source(package.url.to_string(), package.name.to_string()).unwrap();
                 }
                 println!("[2/5] Verifying checksums");
-                
+                for script in scripts.clone() {
+                    println!("{script}");
+                }
                 println!("[3/5] Running build scripts");
                 for script in scripts {
                     read_build_script(script);
@@ -305,7 +311,7 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
             }
             Ok(false) => println!(
                 "{}",
-                "Canceled operation".yellow()
+                "Cancelled install".yellow()
             ),
             Err(e) => eprintln!("Caught exception {} when registering confirm prompt.", e),
         }
@@ -326,9 +332,8 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
 //     let confirm_package_removal = confirm_prompt_custom("Remove these packages?".into());
 // }
 
-use std::io::Error;
 // Sub-function of read_build_script that executes the script part of the scripts. (wow!)
-fn get_source(url_location: String, package_name: String) -> Result<(), Error> {
+fn get_source(url_location: String, package_name: String) -> Result<(), Box<dyn std::error::Error>> {
     let username = whoami::username();
     let package_name = package_name.trim_matches('"');
     let package_dir = format!("/home/{username}/Apps/{}", package_name);

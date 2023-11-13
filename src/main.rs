@@ -102,7 +102,7 @@ fn main() {
         Some(("install", install_matches)) => {
             let packages = collect_input(install_matches);
             println!("Searching for {} packages...", packages.len());
-            install_package(packages.clone()).expect(":)");
+            let _ = install_package(packages.clone());
         }
         Some(("query", query_matches)) => {
             let packages = collect_input(query_matches);

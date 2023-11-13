@@ -1,3 +1,4 @@
+use checksums::hash_file;
 use colored::ColoredString;
 use colored::Colorize;
 use futures_util::StreamExt;
@@ -78,4 +79,13 @@ pub fn read_repos() -> Result<Vec<String>, Box<dyn Error>> {
     }
 
     Ok(return_vec)
+}
+pub async fn verify_checksums(path: &Path, expected: String) -> bool {
+    let hash = hash_file(path, checksums::Algorithm::SHA2256);
+    if hash == expected {
+        true
+    } else {
+        false
+    }
+    
 }
