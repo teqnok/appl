@@ -12,6 +12,8 @@ branch = "prod"
 arch = "X64"
 # Array of dependencies to use. Because appl is centered around portability, this should seldom be used.
 dependencies = []
+# Checksum to verify against. Uses SHA2-256
+checksum = "checksum"
 # Download size of package, in MB.
 download_size = 7
 # Total install size, **without** dependencies
@@ -20,5 +22,5 @@ install_size = 9
 url="https://github.com/vim/vim/archive/refs/tags/v9.0.2048.zip"
 # Build function 
 build = [
-    "print hi"
+    "print @_DIR_" # /home/*user*/Apps/vim/
 ]
