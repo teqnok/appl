@@ -1,11 +1,11 @@
 use colored::Colorize;
 pub const HELP: &str = "";
-pub fn print_help() {
+pub fn print_help() -> String {
     println!("{}", "\nAdvanced Portable Package Loader".green());
     println!("{}", "──────────────────────────────── \n");
 
     println!("Syntax: appl [command] [flags] [argument] \n");
-    println!("{}", "Commands\n".underline().bold().bright_green());
+    println!("{}", "Commands\n".bold().bright_green());
     println!(
         "{}  {}",
         "install".underline(),
@@ -24,4 +24,5 @@ pub fn print_help() {
         "query".underline(),
         "Manage your packages (list, search)"
     );
+    "done".into()
 }

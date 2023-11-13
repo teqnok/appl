@@ -4,8 +4,8 @@
 //           Available in the public domain via the Unlicense
 //
 //------------------------------------------------------------------------------------------
-use checksums::{hash_file, Algorithm};
-use colored::{ColoredString, Colorize};
+// use checksums::{hash_file, Algorithm};
+use colored::Colorize;
 use pkgutils::{download_file, read_repos};
 use prompt::{int_input, prompt_input, select_prompt, select_prompt_string};
 use std::fmt::{self, Display};
@@ -34,10 +34,7 @@ impl Display for Architecture {
         }
     }
 }
-pub enum ApplError {
-    InvalidArchitecture,
-    InvalidBranch,
-}
+
 impl Architecture {
     pub fn from_str(string: &str) -> Architecture {
         let mut arch = Architecture::X64;
@@ -52,18 +49,13 @@ impl Architecture {
     }
 }
 #[derive(Debug)]
+#[allow(non_camel_case_types)]
 pub enum Branch {
     dev,
     prod,
     git,
     beta,
     nightly,
-}
-
-pub struct Version {
-    major: u8,
-    minor: u8,
-    patch: u8,
 }
 impl Display for Branch {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -301,11 +293,13 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
                 for package in packages {
                     get_source(package.url.to_string(), package.name.to_string()).unwrap();
                 }
+                println!("[3/5] Verifying checksums");
+                
                 println!("[2/5] Running build scripts");
                 for script in scripts {
                     read_build_script(script);
                 }
-                println!("[3/5] Verifying checksums");
+                
                 println!("[4/5] Running post-install modules");
                 println!("[5/5] Creating .desktop files and adding to $PATH");
             }
@@ -320,17 +314,17 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
     Ok(())
 }
 
-pub async fn verify_checksums(input: Vec<&str>, algorithm: Algorithm) -> std::io::Result<()> {
-    let file = Path::new("/home/teqnok/.config/lvim/config.lua");
-    let algo = Algorithm::SHA2256;
-    println!("{}", hash_file(file, algo));
-    Ok(())
-}
+// pub async fn verify_checksums(input: Vec<&str>, algorithm: Algorithm) -> std::io::Result<()> {
+//     let file = Path::new("/home/teqnok/.config/lvim/config.lua");
+//     let algo = Algorithm::SHA2256;
+//     println!("{}", hash_file(file, algo));
+//     Ok(())
+// }
 
-pub async fn remove_package(package: Package) {
-    let package_path: String = format!("/home/{}/Apps/{}", whoami::username(), package.name);
-    let confirm_package_removal = confirm_prompt_custom("Remove these packages?".into());
-}
+// pub async fn remove_package(package: Package) {
+//     let package_path: String = format!("/home/{}/Apps/{}", whoami::username(), package.name);
+//     let confirm_package_removal = confirm_prompt_custom("Remove these packages?".into());
+// }
 
 use std::io::Error;
 // Sub-function of read_build_script that executes the script part of the scripts. (wow!)

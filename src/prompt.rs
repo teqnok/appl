@@ -12,7 +12,6 @@ pub fn select_prompt(items: Vec<&str>, prompt: String) -> std::io::Result<&str> 
     let mut select = "";
     match selection {
         Some(index) => {
-            println!("User selected item : {}", items[index]);
             select = items[index]
         }
         None => println!("User did not select anything"),

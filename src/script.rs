@@ -10,7 +10,7 @@ use std::{
 use colored::Colorize;
 use tar::*;
 #[allow(non_camel_case_types)]
-const VARIABLES: [&'static str; 5] = ["@pkgsrc", "@pkgdir", "@home", "", ""];
+const VARIABLES: [&'static str; 5] = ["@pkgsrc", "@pkgdir", "@home", "@version", ""];
 pub enum CompressionTypes {
     Zip,
     Tar,
@@ -46,6 +46,10 @@ pub enum Variables {
 // TODO work with repositories
 pub fn read_build_script<T: ToString>(file: T) {
     let mut defined_vars: HashMap<String, String> = HashMap::new();
+    let mut global_variables: HashMap<String, String> = HashMap::new();
+    global_variables.insert("@home".into(), std::env::var("HOME").unwrap());
+    global_variables.insert("@pkgdir".into(), "d".into());
+    global_variables.insert("@version".into(), "0.6.2-alpha".into());
     let p = file.to_string();
     let path = Path::new(&p);
     let pkgname = path.file_stem().unwrap().to_str().unwrap();
@@ -68,10 +72,14 @@ pub fn read_build_script<T: ToString>(file: T) {
     for mut command in script_split {
         
         match command[0].as_str() { // Match the command and execute it accordingly. TODO make this more secure and maybe async (may cause a race condition or panics)
+            
             "print" => { // pretty self explanatory here man
+                if global_variables.contains_key(&command[1]) {
+                    command[1] = global_variables.get(&command[1]).unwrap().to_string();
+                }
                 if defined_vars.contains_key(&command[1]) {
                     command[1] = defined_vars.get(&command[1]).unwrap().to_string();
-                };
+                } 
                 println!("{}", command[1]);
                 continue
             },

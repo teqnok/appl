@@ -18,7 +18,6 @@ mod prompt;
 mod script;
 mod setup;
 fn main() {
-    read_build_script::<String>("/home/teqnok/.config/appl/vim.toml".into());
     let current_user: String = whoami::username();
     // These lines check for a config file that doesnt exist, will fix. TODO
     match Path::new(&format!("/home/{current_user}/.config/appl/")).try_exists() {
@@ -38,7 +37,7 @@ fn main() {
         .subcommand_required(false)
         // This should be false for dev and true for prod
         .arg_required_else_help(false)
-        .override_help(help::HELP)
+        .override_help(help::print_help())
         .author("teqnok [teqnok@proton.me]")
         .subcommand(
             Command::new("install")
@@ -120,6 +119,6 @@ fn main() {
         Some(("setup", _setup_matches)) => {
             setup();
         }
-        _ => help::print_help(),
+        _ => { help::print_help(); },
     }
 }
