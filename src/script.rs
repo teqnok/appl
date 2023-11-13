@@ -82,7 +82,7 @@ pub fn syscmd(cmd: &str, args: Vec<&str>) {
 }
 
 
-// Read && execute the build function of a package. Supports &str, Vec<&' _Iterator>, and String as inputs.
+// Read && execute the build function of a package. Supports &str / String as inputs.
 // TODO introduce variables for the script to use
 // TODO work with repositories
 pub fn read_build_script<T: ToString>(file: T) {
