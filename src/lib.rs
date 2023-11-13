@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------------------
 // use checksums::{hash_file, Algorithm};
 use colored::Colorize;
+use indicatif::ProgressBar;
 use pkgutils::{download_file, read_repos};
 use prompt::{int_input, prompt_input, select_prompt, select_prompt_string};
 use std::error::Error;
@@ -303,9 +304,12 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
                 println!("[2/5] Verifying checksums");
                 
                 for script in scripts.clone() {
+                    let bar = ProgressBar::new(count);
                     if verify_checksums(&Path::new(&script)) {
-
-                    };
+                        bar.inc(1)
+                    } else {
+                        panic!("A checksum was unable to be verified correctly. The file may be corrupted or malicious.");
+                    }
                 }
                 println!("[3/5] Running build scripts");
                 for script in scripts {
