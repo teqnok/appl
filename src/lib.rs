@@ -138,6 +138,7 @@ pub fn clear() {
 //         .success())
 // }
 
+use crate::pkgutils::verify_checksums;
 use crate::prompt::confirm_prompt_custom;
 use crate::script::read_build_script;
 use clap::ArgMatches;
@@ -293,13 +294,18 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
             confirm_prompt_custom(String::from("Install these packages?"));
         match confirm_package_install {
             Ok(true) => {
+                let mut count = 0;
                 println!("[1/5] Downloading packages");
                 for package in packages {
                     get_source(package.url.to_string(), package.name.to_string()).unwrap();
+                    count += 1;
                 }
                 println!("[2/5] Verifying checksums");
+                
                 for script in scripts.clone() {
-                    println!("{script}");
+                    if verify_checksums(&Path::new(&script)) {
+
+                    };
                 }
                 println!("[3/5] Running build scripts");
                 for script in scripts {
@@ -319,18 +325,6 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
     }
     Ok(())
 }
-
-// pub async fn verify_checksums(input: Vec<&str>, algorithm: Algorithm) -> std::io::Result<()> {
-//     let file = Path::new("/home/teqnok/.config/lvim/config.lua");
-//     let algo = Algorithm::SHA2256;
-//     println!("{}", hash_file(file, algo));
-//     Ok(())
-// }
-
-// pub async fn remove_package(package: Package) {
-//     let package_path: String = format!("/home/{}/Apps/{}", whoami::username(), package.name);
-//     let confirm_package_removal = confirm_prompt_custom("Remove these packages?".into());
-// }
 
 // Sub-function of read_build_script that executes the script part of the scripts. (wow!)
 fn get_source(url_location: String, package_name: String) -> Result<(), Box<dyn std::error::Error>> {
