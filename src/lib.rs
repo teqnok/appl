@@ -293,9 +293,9 @@ pub fn install_package(input: Vec<&str>) -> std::io::Result<()> {
                 for package in packages {
                     get_source(package.url.to_string(), package.name.to_string()).unwrap();
                 }
-                println!("[3/5] Verifying checksums");
+                println!("[2/5] Verifying checksums");
                 
-                println!("[2/5] Running build scripts");
+                println!("[3/5] Running build scripts");
                 for script in scripts {
                     read_build_script(script);
                 }
