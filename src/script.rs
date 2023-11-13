@@ -5,12 +5,13 @@ use std::{
     error::Error,
     fs::File,
     io::BufReader,
-    path::{PathBuf, Path}, collections::HashMap,
+    path::{PathBuf, Path}, collections::HashMap, str::FromStr,
 };
+use sevenz_rust::decompress_file;
 use colored::Colorize;
 use tar::*;
+use zip::ZipArchive;
 #[allow(non_camel_case_types)]
-const VARIABLES: [&'static str; 5] = ["@pkgsrc", "@pkgdir", "@home", "@version", ""];
 pub enum CompressionTypes {
     Zip,
     Tar,
@@ -27,8 +28,52 @@ impl CompressionTypes {
         archive.unpack(destination)?;
         Ok(())
     }
-    pub fn extract_zip() -> Result<(), Box<dyn Error>> {
+    pub fn extract_7z(archive: PathBuf, destination: PathBuf) -> Result<(), Box<dyn Error>> {
+        decompress_file(archive, destination).unwrap();
         Ok(())
+    }
+    fn extract_zip(source: &Path, dest: &Path) -> zip::result::ZipResult<()> {
+        let file = File::open(source)?;
+        let mut zip = ZipArchive::new(file)?;
+    
+        for i in 0..zip.len() {
+            let mut file = zip.by_index(i)?;
+            let outpath = dest.join(file.name());
+    
+            if file.name().ends_with('/') {
+                std::fs::create_dir_all(&outpath)?;
+            } else {
+                if let Some(p) = outpath.parent() {
+                    if !p.exists() {
+                        std::fs::create_dir_all(&p)?;
+                    }
+                }
+                let mut outfile = File::create(&outpath)?;
+                std::io::copy(&mut file, &mut outfile)?;
+            }
+        }
+        Ok(())
+    }
+    // Wrapper function around all of the extract functions
+    // Takes input like: "lua.zip", matches the file extension, then runs the appropriate function.
+    fn extract(archive: &str, dest: PathBuf) {
+        let path = Path::new(archive);
+        let ext = Path::new(archive).extension().and_then(|os_str| os_str.to_str());
+        match ext.unwrap() {
+            "zip" => {
+                CompressionTypes::extract_zip(path, &dest).unwrap();
+            },
+            "7z" => {
+                CompressionTypes::extract_7z(path.to_path_buf(), dest).unwrap();
+            },
+            ".gz" => {
+                CompressionTypes::extract_tar(path.to_path_buf(), dest).unwrap();
+            },
+
+            _ => {
+                println!("Tried to extract a file, but the extension was not valid!");
+            }
+        }
     }
 }
 
@@ -36,10 +81,6 @@ pub fn syscmd(cmd: &str, args: Vec<&str>) {
     std::process::Command::new(cmd).args(args).output().expect("works");
 }
 
-pub enum Variables {
-    PKGDIR,
-    PKGSRC,
-}
 
 // Read && execute the build function of a package. Supports &str, Vec<&' _Iterator>, and String as inputs.
 // TODO introduce variables for the script to use
@@ -98,8 +139,7 @@ pub fn read_build_script<T: ToString>(file: T) {
                 continue
             },
             "extract" => {
-                // TODO implement function for extracting tar.gz/zip/7z/rar
-                // Halfway done, just need 7z and rar.
+                CompressionTypes::extract(command[1].as_str(), PathBuf::from_str(command[2].as_str()).unwrap());
                 continue
             },
             "get-file" => {

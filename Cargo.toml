@@ -14,6 +14,7 @@ futures-util = "0.3.28"
 git2 = "0.18.1"
 indicatif = "0.17.6"
 reqwest = "0.11.22"
+sevenz-rust = { version = "0.5.3", features = ["aes256"] }
 tar = "0.4.40"
 tokio = "1.33.0"
 toml = "0.8.2"
