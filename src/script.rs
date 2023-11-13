@@ -5,7 +5,7 @@ use std::{
     error::Error,
     fs::File,
     io::BufReader,
-    path::{PathBuf, Path}, collections::HashMap, str::FromStr,
+    path::{PathBuf, Path}, collections::HashMap, str::FromStr, process::Command,
 };
 use sevenz_rust::decompress_file;
 use colored::Colorize;
@@ -124,6 +124,10 @@ pub fn read_build_script<T: ToString>(file: T) {
                 println!("{}", command[1]);
                 continue
             },
+            "bash" => { // Run a bash command in the current dir
+                command.remove(1);
+                Command::new("bash").arg("-c").args(command);
+            },
             "define" => {
                 defined_vars.insert(command[1].clone(), command[2].clone()); 
             },
@@ -149,7 +153,9 @@ pub fn read_build_script<T: ToString>(file: T) {
                 // Will allow for external scripts to run inside the script (say setting up lua, then neovim)
                 continue
             },
-            _ => {},
+            _ => {
+                println!("Unrecognized command {}, skipping line.", command[0]);
+            },
         }
     }
 }

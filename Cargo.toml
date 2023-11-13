@@ -22,3 +22,5 @@ trauma = "*"
 walkdir = "2.4.0"
 whoami = "1.4.1"
 zip = "0.6.6"
+[dependencies.rustix]
+version = "0.38.19"

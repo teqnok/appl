@@ -37,7 +37,7 @@ fn main() {
         .subcommand_required(false)
         // This should be false for dev and true for prod
         .arg_required_else_help(false)
-        .override_help(help::print_help())
+        .override_help(help::HELP)
         .author("teqnok [teqnok@proton.me]")
         .subcommand(
             Command::new("install")
