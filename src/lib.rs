@@ -304,6 +304,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
                 println!("[2/5] Verifying checksums");
                 
                 for script in scripts.clone() {
+                    println!("{script}");
                     let bar = ProgressBar::new(count);
                     if verify_checksums(&Path::new(&script)) {
                         bar.inc(1)
@@ -313,11 +314,14 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
                 }
                 println!("[3/5] Running build scripts");
                 for script in scripts {
+                    
                     read_build_script(script);
                 }
                 
                 println!("[4/5] Running post-install modules");
+                // TODO do this
                 println!("[5/5] Creating .desktop files and adding to $PATH");
+                // TODO this too
             }
             Ok(false) => println!(
                 "{}",

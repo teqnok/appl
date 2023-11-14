@@ -11,7 +11,7 @@ use script::read_build_script;
 use std::{fs, path::Path};
 use whoami;
 
-use crate::setup::setup;
+use crate::{setup::setup, pkgutils::generate_checksum};
 mod help;
 mod pkgutils;
 mod prompt;
@@ -50,6 +50,7 @@ fn main() {
                         .action(ArgAction::Set),
                 ),
         )
+        
         .subcommand(
             Command::new("new")
                 .about("Create a new TOML Script from prompts")
@@ -94,7 +95,13 @@ fn main() {
         .subcommand(
             Command::new("query")
                 .about("Show information about the given package")
+                .subcommand(
+                    Command::new("gen_hash")
+                                .about("Generate a SHA2-256 hash using the package's source")
+                                .arg(Arg::new("package").index(1).action(ArgAction::Set))
+                )
                 .arg(Arg::new("package").index(1).action(ArgAction::Set)),
+                
         )
         .get_matches();
 
@@ -105,8 +112,13 @@ fn main() {
             let _ = install_package(packages.clone());
         }
         Some(("query", query_matches)) => {
-            let packages = collect_input(query_matches);
-            println!("Searching for {:?}", packages[0].green());
+            match query_matches.subcommand() {
+                Some(("gen_hash", hash_matches)) => {
+                    let matches = collect_input(hash_matches);
+                    generate_checksum(matches[0])
+                }
+                _ => {}
+            }
         }
         Some(("new", _new_matches)) => {
             new_package();

@@ -19,6 +19,7 @@ pub async fn download_file(
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Remove quotes from the string ("string" -> string)
     let url = url.trim_matches('"');
+    let name = name.trim_matches('"');
     // Create a reqwest client
     let client = reqwest::Client::new();
     let new_path = PathBuf::from(path);
@@ -43,7 +44,7 @@ pub async fn download_file(
         .unwrap()
         .progress_chars("#>-"),
     );
-    pb.set_message(format!("{}{} {}", "=".blue(), ">".green(), name));
+    pb.set_message(format!("{}{} {}", "=".blue(), ">".green(), name.bold().green()));
     // Open the file in write-only mode
     std::fs::create_dir_all(new_path.parent().unwrap())?;
     let mut file = std::fs::File::create(path)?;
@@ -87,11 +88,36 @@ pub fn verify_checksums(path: &Path) -> bool {
     let keys = get_toml_keys(file.to_owned());
     let expected: String = keys.unwrap()["checksum"].to_string();
     let hash = hash_file(path, checksums::Algorithm::SHA2256);
+    println!("{hash}");
+    println!("{expected}");
     if hash == expected {
         true
     } else {
         false
     }
+}
+// Generate a packages checksum then echo it to user.
+// TODO make this work with build scripts
+pub fn generate_checksum(path: &str) {
+    let rpath = get_config();
+    let keys = get_toml_keys(format!("{rpath}{path}.toml")).unwrap();
+    let url = keys["url"].to_string();
+    let name = keys["name"].to_string();
+    let path = &format!("{}{}", get_config(), "appl_tmp_checksum");
+    let _ = download_file(&url, path.as_str(), name.green());
+    let hash = hash_file(&Path::new(path), checksums::Algorithm::SHA2256);
+    println!("{}: {}", "Checksum".green(), hash.blue());
+}
+
+#[cfg(windows)]
+pub fn get_config() -> String {
+    let homedir = std::env::var("HOME").unwrap();
+    format!("{homedir}/AppData/Local/appl/")
+}
+#[cfg(not(windows))]
+pub fn get_config() -> String {
+    let homedir = std::env::var("HOME").unwrap();
+    format!("{homedir}/.config/appl/")
 }
 
 use std::io::Read;
