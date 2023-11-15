@@ -1,5 +1,4 @@
 use std::io::Error;
-
 use colored::{ColoredString, Colorize};
 use dialoguer::{console::Term, theme::ColorfulTheme, Confirm, Password, Select};
 
@@ -71,6 +70,13 @@ pub fn create_password(prompt_string: &str, confirmation: &str) -> String {
 }
 
 use std::io::Write;
+/// Displays a yes/no prompt without dialoguer
+/// # Examples
+/// ```
+/// # use appl::prompt::confirm_prompt_custom;
+/// let confirm = confirm_prompt_custom("Do you like apples?").unwrap();
+/// // Do you like apples? [y/n] >
+/// ``` 
 pub fn confirm_prompt_custom(display_text: String) -> Result<bool, Error> {
     let mut input: String = String::new();
     let mut confirmed: bool = false;

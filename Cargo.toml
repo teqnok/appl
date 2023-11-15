@@ -11,14 +11,13 @@ clap = {version = "4.3.23", features = ["derive"]}
 colored = "2.0.4"
 dialoguer = "0.10.4"
 futures-util = "0.3.28"
-git2 = "0.18.1"
 indicatif = "0.17.6"
-reqwest = "0.11.22"
+reqwest = { version = "0.11.22", features = ["stream"] }
 sevenz-rust = { version = "0.5.3", features = ["aes256"] }
+syntect = "5.1.0"
 tar = "0.4.40"
-tokio = "1.33.0"
+tokio = { version = "1.33.0", features = ["macros", "rt-multi-thread"] }
 toml = "0.8.2"
-trauma = "*"
 walkdir = "2.4.0"
 whoami = "1.4.1"
 zip = "0.6.6"

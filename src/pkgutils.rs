@@ -6,12 +6,17 @@ use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::header::CONTENT_LENGTH;
 use std::error::Error;
+use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 #[tokio::main]
 // Downloading function. (sends a HTTP GET request to a URL and saves it to the $path var)
+/// Core function for downloading a file to disk.
+/// 
+/// Takes a URL, path and display name and downloads with progress bar and ETA.
+/// Once implemented, use the download!() macro instead. 
 pub async fn download_file(
     url: &str,
     path: &str,
@@ -65,7 +70,6 @@ pub async fn download_file(
     Ok(())
 }
 
-// Read the currently active repositories (folders of scripts)
 pub fn read_repos() -> Result<Vec<String>, Box<dyn Error>> {
     let mut return_vec: Vec<String> = vec![];
     let uname = whoami::username();
@@ -83,6 +87,7 @@ pub fn read_repos() -> Result<Vec<String>, Box<dyn Error>> {
 
     Ok(return_vec)
 }
+
 pub fn verify_checksums(path: &Path) -> bool {
     let file = path.to_str().unwrap();
     let keys = get_toml_keys(file.to_owned());
@@ -107,6 +112,7 @@ pub fn generate_checksum(path: &str) {
     let _ = download_file(&url, path.as_str(), name.green());
     let hash = hash_file(&Path::new(path), checksums::Algorithm::SHA2256);
     println!("{}: {}", "Checksum".green(), hash.blue());
+    let _ = fs::remove_file(path);
 }
 
 #[cfg(windows)]
@@ -114,6 +120,13 @@ pub fn get_config() -> String {
     let homedir = std::env::var("HOME").unwrap();
     format!("{homedir}/AppData/Local/appl/")
 }
+/// Return the script folder on both *nix and Windows.
+/// # Examples
+/// 
+/// ```
+/// let config = get_config();
+/// assert_eq!(config, std::path::Path::new("~/.config/appl/")); 
+/// ```
 #[cfg(not(windows))]
 pub fn get_config() -> String {
     let homedir = std::env::var("HOME").unwrap();
@@ -121,8 +134,15 @@ pub fn get_config() -> String {
 }
 
 use std::io::Read;
-
-fn get_toml_keys(file: String) -> Result<toml::Value, Box<dyn std::error::Error>> {
+/// An improved version of read_toml() that properly handles errors and runs some boilerplate.
+/// # Examples
+/// ```
+/// # use appl::pkgutils::{get_toml_keys, get_config};
+/// let config = get_config();
+/// let keys = get_toml_keys(format!("{config}/vim.toml")).unwrap();
+/// assert_eq!(keys["name"].to_string().trim_matches('"'), "vim");
+/// ``` 
+pub fn get_toml_keys(file: String) -> Result<toml::Value, Box<dyn std::error::Error>> {
     let path = Path::new(&file);
     let display = path.display();
 
@@ -141,4 +161,27 @@ fn get_toml_keys(file: String) -> Result<toml::Value, Box<dyn std::error::Error>
         std::io::Error::new(std::io::ErrorKind::Other, e)
     })?;
     Ok(toml_keys)
+}
+
+/// Explains what a build script does.
+/// # Examples
+/// ```
+/// # use appl::pkgutils::explain;
+/// 
+/// // build = [
+/// //      "print 'Cloning repo vim/vim...'",
+/// //      "clone vim/vim @pkgdir/src/",
+/// //      "print 'Done!'"   
+/// // ]
+/// 
+/// // appl query explain script
+/// explain("script");
+/// // Package 'script' does the following:
+/// // Prints a message
+/// // Clones the github repo 'vim/vim' to the directory '@pkgdir/src'
+/// // Prints a message
+/// // Sources and installs a external package called 'lua' silently
+/// ```
+pub fn explain() {
+
 }

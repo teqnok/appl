@@ -5,21 +5,34 @@
 //
 //------------------------------------------------------------------------------------------
 // use checksums::{hash_file, Algorithm};
+#[doc(hidden)]
 use colored::Colorize;
 use indicatif::ProgressBar;
-use pkgutils::{download_file, read_repos};
+use pkgutils::{download_file, read_repos, get_config};
 use prompt::{int_input, prompt_input, select_prompt, select_prompt_string};
-use std::error::Error;
 use std::fmt::{self, Display};
 use std::io::Read;
 use std::process::Command;
 use std::time::Instant;
 use std::{fs::File, path::Path};
-mod pkgutils;
+pub mod pkgutils;
+pub mod prompt;
+pub mod viewer;
+use crate::pkgutils::verify_checksums;
+use crate::prompt::confirm_prompt_custom;
+use crate::script::read_build_script;
+use clap::ArgMatches;
+use walkdir::WalkDir;
+
+pub mod script;
+use std::collections::HashMap;
 // ----------------------------
 // Define supported architectures and branches for a package
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
+/// Represents a architecture that a package runs on.
+/// 
+/// Options are: x86_64 (X64), x86_32 (X32), arm64 (Apple Silicon & Android/iOS), any (apply to all, like fonts or icons)
 pub enum Architecture {
     X64,
     X32,
@@ -52,6 +65,13 @@ impl Architecture {
 }
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
+/// Represents a branch of production.
+/// Use these as follows:
+///     dev: unstable builds
+///     prod: feature-ready, safe builds
+///     git: latest git commit
+///     beta: testing builds
+///     nightly: updated daily
 pub enum Branch {
     dev,
     prod,
@@ -88,7 +108,8 @@ impl Branch {
         branch
     }
 }
-
+/// Represents a package's metadata. 
+/// Use in package operations and package-related functions.
 pub struct Package {
     arch: Architecture,
     branch: Branch,
@@ -139,20 +160,15 @@ pub fn clear() {
 //         .success())
 // }
 
-use crate::pkgutils::verify_checksums;
-use crate::prompt::confirm_prompt_custom;
-use crate::script::read_build_script;
-use clap::ArgMatches;
-use walkdir::WalkDir;
-mod prompt;
-mod script;
-use std::collections::HashMap;
-// Root command for installing packages,
+
+/// Root command for installing packages.
+/// Takes a vector of strings, finds file matches, downloads the files, verifies checksums, and runs build scripts.
+/// Not to be directly called, use the install_pkg!() macro (once implemented) instead.
 pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error>> {
     let time = Instant::now();
     // DEFINE VARIABLES
     let current_user: String = whoami::username(); //
-    let config_path: String = format!("/home/{current_user}/.config/appl/"); //
+    let config_path: String = get_config();
 
     // METADATA VECTORS
     let mut packages_to_install: Vec<String> = vec![]; //
@@ -188,8 +204,12 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
     }
 
     for pkg in not_found_terms {
+        if packages_to_install.is_empty() {
+            break;
+        }
         println!("{} {}. Skipping..", "Could not find result".red(), pkg.yellow())
     }
+    
 
     if packages_to_install.is_empty() {
         println!(

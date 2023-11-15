@@ -4,20 +4,20 @@
 //      Released in the public domain via the Unlicense
 //------------------------------------------------------------------------------
 
-use appl::{clear, collect_input, install_package, new_package};
+use appl::{collect_input, install_package, new_package, viewer::script_viewer};
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
-use script::read_build_script;
-use std::{fs, path::Path};
+use std::path::Path;
 use whoami;
 
 use crate::{setup::setup, pkgutils::generate_checksum};
 mod help;
-mod pkgutils;
-mod prompt;
-mod script;
-mod setup;
+pub mod pkgutils;
+pub mod prompt;
+pub mod script;
+pub mod setup;
 fn main() {
+    script_viewer("/home/teqnok/.config/appl/vim.toml".into());
     let current_user: String = whoami::username();
     // These lines check for a config file that doesnt exist, will fix. TODO
     match Path::new(&format!("/home/{current_user}/.config/appl/")).try_exists() {
@@ -116,7 +116,10 @@ fn main() {
                 Some(("gen_hash", hash_matches)) => {
                     let matches = collect_input(hash_matches);
                     generate_checksum(matches[0])
-                }
+                },
+                Some(("explain", explain_matches)) => {
+                    
+                },
                 _ => {}
             }
         }

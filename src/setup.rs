@@ -1,51 +1,62 @@
 // Setup module for appl
-// Creates config file and PIN
-// Provides preset trees to use
+// 
+// 
 
 use std::fs;
 
 use crate::prompt::{self, select_prompt};
 use appl::clear;
-pub fn setup() -> u32 {
-    let current_user: String = whoami::username();
+use colored::Colorize;
+use std::process::Command;
+/// Checks to see if a program is installed.
+/// Currently only used in the setup process.
+fn is_installed(cmd: &str) -> bool {
+   let output = Command::new(cmd)
+       .arg("--version")
+       .output()
+       .expect("Failed to execute command");
 
-    // These lines create a config file, which will stop setup. Uncomment them for production builds
-    let paths = vec![
-        format!("/home/{current_user}/.config/appl"),
-        format!("/home/{current_user}/Apps"),
-    ];
-    for path in paths {
-        let _ = fs::create_dir(&path);
+   output.status.success()
+}
+/// Creates config directories and checks to see what modules can be loaded.
+pub fn setup() -> u32 {
+    println!("[1/6] Creating config folders");
+    make_configs();
+    println!("{}","[2/6] Checking if git is installed...".green());
+    if is_installed("git") {
+        println!("git --version successful, enabling git command")
+    } else {
+        println!("git not found, build scripts will not be able to use the 'clone' command.");
     }
-    clear();
-    println!("Found recommended architecture of {:?}", whoami::arch());
-    let confirm_setup =
-        prompt::confirm_prompt_custom(String::from("Would you like to enter setup?"));
-    match confirm_setup {
-        Ok(true) => {}
-        Ok(false) => return 1,
-        Err(e) => {
-            println!("Caught error {:?}", e)
-        }
+
+    println!("{}","[3/6] Checking if make is installed...".green());
+    if is_installed("make") {
+        println!("make --version successful, enabling make command")
+    } else {
+        println!("make not found, build scripts will not be able to use the 'make' command.");
     }
-    let input = prompt::create_password("Create a PIN to install packages", "Repeat the PIN");
-    let confirm = prompt::confirm_prompt_custom(String::from(
-        "Would you like to use a predefined package list?",
-    ));
-    match confirm {
-        Ok(val) => {
-            if val {
-                select_prompt(
-                    vec!["ROMs", "Development Tools", "MC Mods", "Complete"],
-                    String::from("Select a package base"),
-                )
-                .expect(":)");
-            }
-            if !val {
-                println!("no")
-            }
-        }
-        Err(_) => todo!(),
+    println!("{}", "[4/6] Checking if bash is installed".green());
+    if is_installed("bash") {
+        println!("bash --version successful, enabling bash command")
+    } else {
+        println!("Bash not found, build scripts will not be able to use the 'bash' command.");
     }
+    println!("");
+
+    println!("");
     0
+}
+#[cfg(not(windows))]
+fn make_configs() {
+    let uname = whoami::username();
+
+    fs::create_dir(format!("/home/{uname}/.config/appl"));
+    fs::create_dir(format!("/home/{uname}/Apps/"));
+}
+#[cfg(windows)]
+fn make_configs() {
+    let path = std::env::var("HOME").unwrap();
+
+    fs::create_dir(format!("{path}/AppData/Local/appl/"));
+    fs::create_dir(format!("{path}/Apps/"));
 }

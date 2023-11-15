@@ -1,12 +1,15 @@
 // Appl module for reading the scripts; then executing them.
 // Released in the public domain under the Unlicense [https://Unlicense.org/]
+
 #![allow(dead_code)]
+
 use std::{
     error::Error,
     fs::File,
     io::BufReader,
     path::{PathBuf, Path}, collections::HashMap, str::FromStr, process::Command,
 };
+
 use sevenz_rust::decompress_file;
 use colored::Colorize;
 use tar::*;
@@ -82,9 +85,16 @@ pub fn syscmd(cmd: &str, args: Vec<&str>) {
 }
 
 
-// Read && execute the build function of a package. Supports &str / String as inputs.
-// TODO introduce variables for the script to use
-// TODO work with repositories
+/// Reads a file's build[] function, then tokenizes and executes it.
+/// Accepts a String or a &str as input.
+/// 
+/// # Examples
+/// ```
+/// # use appl::script::read_build_script;
+/// use appl::pkgutils::get_config;
+/// let config = get_config();
+/// read_build_script(format!("{config}vim.toml"));
+/// ```
 pub fn read_build_script<T: ToString>(file: T) {
     let mut defined_vars: HashMap<String, String> = HashMap::new();
     let mut global_variables: HashMap<String, String> = HashMap::new();
@@ -150,6 +160,7 @@ pub fn read_build_script<T: ToString>(file: T) {
                 download_file(&command[1],  &command[2], command[3].green()).unwrap();
             }
             "load" => {
+                read_build_script(command[1].clone());
                 // Will allow for external scripts to run inside the script (say setting up lua, then neovim)
                 continue
             },
