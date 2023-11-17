@@ -100,6 +100,11 @@ fn main() {
                                 .about("Generate a SHA2-256 hash using the package's source")
                                 .arg(Arg::new("package").index(1).action(ArgAction::Set))
                 )
+                .subcommand(
+                    Command::new("build")
+                                .about("Run a package's build[] function.")
+                                .arg(Arg::new("package").index(1).action(ArgAction::Set))
+                )
                 .arg(Arg::new("package").index(1).action(ArgAction::Set)),
                 
         )
@@ -117,7 +122,7 @@ fn main() {
                     let matches = collect_input(hash_matches);
                     generate_checksum(matches[0])
                 },
-                Some(("explain", explain_matches)) => {
+                Some(("build", build_matches)) => {
                     
                 },
                 _ => {}

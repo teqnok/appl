@@ -18,7 +18,7 @@ use std::{fs::File, path::Path};
 pub mod pkgutils;
 pub mod prompt;
 pub mod viewer;
-use crate::pkgutils::verify_checksums;
+use crate::pkgutils::{verify_checksums, get_toml_keys};
 use crate::prompt::confirm_prompt_custom;
 use crate::script::read_build_script;
 use clap::ArgMatches;
@@ -160,7 +160,7 @@ pub fn clear() {
 //         .success())
 // }
 
-
+// TODO make this a lot smaller
 /// Root command for installing packages.
 /// Takes a vector of strings, finds file matches, downloads the files, verifies checksums, and runs build scripts.
 /// Not to be directly called, use the install_pkg!() macro (once implemented) instead.
@@ -179,9 +179,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
     let mut scripts = Vec::new();
     //----------------------------------------------------a
     // ADD VARIABLES TO INSTALL LIST
-    for &path in &input {
-        found_terms.insert(path, false);
-    }
+    for &path in &input { found_terms.insert(path, false); }
     
     for entry in WalkDir::new(&config_path) {
         let entry = entry.unwrap();
@@ -225,12 +223,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
                 "->".purple(),
                 package.bright_blue().bold()
             );
-            let toml_read = read_toml(package.clone().into());
-            let toml_keys: Result<toml::Value, toml::de::Error> = toml::from_str(&toml_read);
-            let toml_keys = toml_keys.map_err(|e| {
-                println!("{}{}", "Failed to parse TOML script. Either repair the script or use a different package. \n".yellow(),e.to_string().yellow());
-                std::io::Error::new(std::io::ErrorKind::Other, e)
-            })?;
+            let toml_keys = get_toml_keys(package.clone()).unwrap();
             packages.push(Package::new(
                 Architecture::from_str(toml_keys["arch"].as_str().unwrap()),
                 Branch::from_str(toml_keys["branch"].as_str().unwrap()),
@@ -303,7 +296,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
             download_size += package.download_size;
             install_size += package.install_size;
         }
-        // Convert the vector of Strings (ex ["3","4"]) to a vector of `i32`s (ex [3,4]), then add them (ex 7)
+        
         println!(
             "Download size: {} MB \t Install size: {} MB [Took {:?}]",
             download_size.to_string().green().bold(),
@@ -354,7 +347,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
-// Sub-function of read_build_script that executes the script part of the scripts. (wow!)
+/// Sub-function of install_package that creates the package's directory and begins the download.
 fn get_source(url_location: String, package_name: String) -> Result<(), Box<dyn std::error::Error>> {
     let username = whoami::username();
     let package_name = package_name.trim_matches('"');
@@ -376,17 +369,17 @@ fn get_source(url_location: String, package_name: String) -> Result<(), Box<dyn 
         }
         Err(e) => eprintln!("Encountered exception {} while checking directory", e),
     };
-
+    let path = format!("{package_dir}/tmp/{package_name}");
     download_file(
         url_location.as_str(),
-        &format!("{package_dir}/tmp/{package_name}"),
+        path.as_str(),
         package_name.green().bold(),
     )
     .unwrap();
     Ok(())
 }
 
-// Collect input from 'clap' and return a vector. Not related to anything else.
+/// Collect input from 'clap' and return a vector. Not related to anything else.
 pub fn collect_input(matches: &ArgMatches) -> Vec<&str> {
     let packages: Vec<&str> = matches
         .get_many::<String>("package")

@@ -25,13 +25,13 @@ pub enum CompressionTypes {
 }
 
 impl CompressionTypes {
-    pub fn extract_tar(archive: PathBuf, destination: PathBuf) -> Result<(), Box<dyn Error>> {
+    fn extract_tar(archive: PathBuf, destination: PathBuf) -> Result<(), Box<dyn Error>> {
         let file = File::open(archive.to_str().unwrap())?;
         let mut archive = Archive::new(BufReader::new(file));
         archive.unpack(destination)?;
         Ok(())
     }
-    pub fn extract_7z(archive: PathBuf, destination: PathBuf) -> Result<(), Box<dyn Error>> {
+    fn extract_7z(archive: PathBuf, destination: PathBuf) -> Result<(), Box<dyn Error>> {
         decompress_file(archive, destination).unwrap();
         Ok(())
     }
@@ -59,7 +59,7 @@ impl CompressionTypes {
     }
     // Wrapper function around all of the extract functions
     // Takes input like: "lua.zip", matches the file extension, then runs the appropriate function.
-    fn extract(archive: &str, dest: PathBuf) {
+    pub fn extract(archive: &str, dest: PathBuf) {
         let path = Path::new(archive);
         let ext = Path::new(archive).extension().and_then(|os_str| os_str.to_str());
         match ext.unwrap() {
@@ -74,7 +74,7 @@ impl CompressionTypes {
             },
 
             _ => {
-                println!("Tried to extract a file, but the extension was not valid!");
+                println!("{}","Could not extract archive. The script may not be valid.".yellow());
             }
         }
     }
@@ -98,48 +98,44 @@ pub fn syscmd(cmd: &str, args: Vec<&str>) {
 pub fn read_build_script<T: ToString>(file: T) {
     let mut defined_vars: HashMap<String, String> = HashMap::new();
     let mut global_variables: HashMap<String, String> = HashMap::new();
+
     global_variables.insert("@home".into(), std::env::var("HOME").unwrap());
-    global_variables.insert("@pkgdir".into(), "d".into());
     global_variables.insert("@version".into(), "0.6.2-alpha".into());
+
     let p = file.to_string();
     let path = Path::new(&p);
     let pkgname = path.file_stem().unwrap().to_str().unwrap();
+
     println!("{}{} {}", "=".blue(), ">".green(), pkgname.green().bold());
 
+    global_variables.insert("@pkgdir".into(), get_app_folder(&get_app_name(pkgname)));
+    
     let toml = read_toml(p); 
     let toml_keys: toml::Value = toml::from_str(&toml).unwrap(); // Deserialize the toml file into keys
-    let script: Vec<String> = toml_keys["build"] // Get the build() function of a build script
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|value| value.as_str().unwrap().to_string())
-        .collect();
+    let build = get_build_func(toml_keys["build"].clone());
 
-    let script_split: Vec<Vec<String>> = script // Split the function into a list of commands (yes, a vector of vectors)
-        .iter()
-        .map(|command| command.split_whitespace().map(|s| s.to_string()).collect())
-        .collect();
-
-    for mut command in script_split {
-        
+    for mut command in build {
+        // Check to see if any parts of the command contain recognized variables.
+        for i in 0..command.len() {
+            if defined_vars.keys().any(|value| command[i].contains(value)) {
+                
+            };
+        }
         match command[0].as_str() { // Match the command and execute it accordingly. TODO make this more secure and maybe async (may cause a race condition or panics)
             
             "print" => { // pretty self explanatory here man
-                if global_variables.contains_key(&command[1]) {
-                    command[1] = global_variables.get(&command[1]).unwrap().to_string();
-                }
-                if defined_vars.contains_key(&command[1]) {
-                    command[1] = defined_vars.get(&command[1]).unwrap().to_string();
-                } 
-                println!("{}", command[1]);
+                command.remove(0);
+                println!("{:?}", command);
                 continue
             },
             "bash" => { // Run a bash command in the current dir
-                command.remove(1);
+                command.remove(0);
                 Command::new("bash").arg("-c").args(command);
+                continue
             },
             "define" => {
                 defined_vars.insert(command[1].clone(), command[2].clone()); 
+                continue
             },
             "make" => { // Executes CMake/Make in the specified directory. 
                 let path = command[1].as_str();
@@ -171,11 +167,24 @@ pub fn read_build_script<T: ToString>(file: T) {
     }
 }
 
+pub fn get_build_func(key: toml::Value) -> Vec<Vec<String>> {
+    let script: Vec<String> = key["build"] // Get the build() function of a build script
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap().to_string())
+        .collect();
 
+    let script_split: Vec<Vec<String>> = script // Split the function into a list of commands (yes, a vector of vectors)
+        .iter()
+        .map(|command| command.split_whitespace().map(|s| s.to_string()).collect())
+        .collect();
+    script_split
+}
 
 use std::io::Read;
 
-use crate::pkgutils::download_file;
+use crate::pkgutils::{download_file, get_app_folder, get_app_name};
 
 fn read_toml(file: String) -> String {
     let path = Path::new(&file);

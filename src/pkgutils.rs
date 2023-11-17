@@ -133,7 +133,25 @@ pub fn get_config() -> String {
     format!("{homedir}/.config/appl/")
 }
 
+pub fn get_app_folder(term: &str) -> String {
+    let homedir = std::env::var("HOME").unwrap();
+    format!("{homedir}/Apps/{term}")
+}
+
+pub fn get_app_name(term: &str) -> String {
+    for file in walkdir::WalkDir::new(get_config()) {
+        let ffile = file.unwrap();
+        let path = ffile.path();
+        if Path::new(term) == path.file_name().unwrap() {
+            return String::from(path.as_os_str().to_str().unwrap())
+        }
+    }
+    "/tmp/".into()
+}
+
 use std::io::Read;
+
+use crate::script::get_build_func;
 /// An improved version of read_toml() that properly handles errors and runs some boilerplate.
 /// # Examples
 /// ```
@@ -182,6 +200,13 @@ pub fn get_toml_keys(file: String) -> Result<toml::Value, Box<dyn std::error::Er
 /// // Prints a message
 /// // Sources and installs a external package called 'lua' silently
 /// ```
-pub fn explain() {
+pub fn explain(script: String) {
+    let toml_keys = get_toml_keys(script).unwrap();
+    let build = get_build_func(toml_keys["build"].clone());
+
+    for command in build {
+
+    }
+
 
 }
