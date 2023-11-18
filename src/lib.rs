@@ -316,20 +316,17 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
                 }
                 println!("[2/5] Verifying checksums");
                 
-                for script in scripts.clone() {
-                    println!("{script}");
-                    let bar = ProgressBar::new(count);
-                    if verify_checksums(&Path::new(&script)) {
-                        bar.inc(1)
-                    } else {
-                        panic!("A checksum was unable to be verified correctly. The file may be corrupted or malicious.");
-                    }
-                }
+                // for script in scripts.clone() {
+                //     println!("{script}");
+                //     let bar = ProgressBar::new(count);
+                //     if verify_checksums(&Path::new(&script)) {
+                //         bar.inc(1)
+                //     } else {
+                //         panic!("A checksum was unable to be verified correctly. The file may be corrupted or malicious.");
+                //     }
+                // }
                 println!("[3/5] Running build scripts");
-                for script in scripts {
-                    
-                    read_build_script(script);
-                }
+                for script in scripts { read_build_script(script); }
                 
                 println!("[4/5] Running post-install modules");
                 // TODO do this

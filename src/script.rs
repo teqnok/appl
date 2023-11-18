@@ -115,12 +115,19 @@ pub fn read_build_script<T: ToString>(file: T) {
     let build = get_build_func(toml_keys["build"].clone());
 
     for mut command in build {
+
         // Check to see if any parts of the command contain recognized variables.
         for i in 0..command.len() {
-            if defined_vars.keys().any(|value| command[i].contains(value)) {
-                
-            };
+            if let Some(value) = defined_vars.keys().find(|&key| command[i].contains(key)) {
+                let replacement = defined_vars.get(value).unwrap();
+                command[i] = command[i].replace(value, replacement);
+            }
+            if let Some(value) = global_variables.keys().find(|&key| command[i].contains(key)) {
+                let replacement = global_variables.get(value).unwrap();
+                command[i] = command[i].replace(value, replacement);
+            }
         }
+
         match command[0].as_str() { // Match the command and execute it accordingly. TODO make this more secure and maybe async (may cause a race condition or panics)
             
             "print" => { // pretty self explanatory here man
@@ -133,7 +140,7 @@ pub fn read_build_script<T: ToString>(file: T) {
                 Command::new("bash").arg("-c").args(command);
                 continue
             },
-            "define" => {
+            "define" => { // Define a varible
                 defined_vars.insert(command[1].clone(), command[2].clone()); 
                 continue
             },
@@ -152,10 +159,10 @@ pub fn read_build_script<T: ToString>(file: T) {
                 CompressionTypes::extract(command[1].as_str(), PathBuf::from_str(command[2].as_str()).unwrap());
                 continue
             },
-            "get-file" => {
+            "get-file" => { // Download a external file
                 download_file(&command[1],  &command[2], command[3].green()).unwrap();
             }
-            "load" => {
+            "load" => { // Load a different build script. Circular loops are possible
                 read_build_script(command[1].clone());
                 // Will allow for external scripts to run inside the script (say setting up lua, then neovim)
                 continue
@@ -166,6 +173,8 @@ pub fn read_build_script<T: ToString>(file: T) {
         }
     }
 }
+
+
 
 pub fn get_build_func(key: toml::Value) -> Vec<Vec<String>> {
     let script: Vec<String> = key["build"] // Get the build() function of a build script
