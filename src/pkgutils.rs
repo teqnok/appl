@@ -52,7 +52,7 @@ pub async fn download_file(
     pb.set_message(format!("{}{} {}", "=".blue(), ">".green(), name.bold().green()));
     // Open the file in write-only mode
     std::fs::create_dir_all(new_path.parent().unwrap())?;
-    let mut file = std::fs::File::create(path)?;
+    let mut file = std::fs::File::create(format!("{path}.tar.gz"))?;
 
     // Read the response body in chunks
     let mut stream = response.bytes_stream();
@@ -179,34 +179,4 @@ pub fn get_toml_keys(file: String) -> Result<toml::Value, Box<dyn std::error::Er
         std::io::Error::new(std::io::ErrorKind::Other, e)
     })?;
     Ok(toml_keys)
-}
-
-/// Explains what a build script does.
-/// # Examples
-/// ```
-/// # use appl::pkgutils::explain;
-/// 
-/// // build = [
-/// //      "print 'Cloning repo vim/vim...'",
-/// //      "clone vim/vim @pkgdir/src/",
-/// //      "print 'Done!'"   
-/// // ]
-/// 
-/// // appl query explain script
-/// explain("script");
-/// // Package 'script' does the following:
-/// // Prints a message
-/// // Clones the github repo 'vim/vim' to the directory '@pkgdir/src'
-/// // Prints a message
-/// // Sources and installs a external package called 'lua' silently
-/// ```
-pub fn explain(script: String) {
-    let toml_keys = get_toml_keys(script).unwrap();
-    let build = get_build_func(toml_keys["build"].clone());
-
-    for command in build {
-
-    }
-
-
 }

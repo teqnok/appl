@@ -17,7 +17,6 @@ pub mod prompt;
 pub mod script;
 pub mod setup;
 fn main() {
-    script_viewer("/home/teqnok/.config/appl/vim.toml".into());
     let current_user: String = whoami::username();
     // These lines check for a config file that doesnt exist, will fix. TODO
     match Path::new(&format!("/home/{current_user}/.config/appl/")).try_exists() {
