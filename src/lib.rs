@@ -5,34 +5,36 @@
 //
 //------------------------------------------------------------------------------------------
 // use checksums::{hash_file, Algorithm};
+use clap::ArgMatches;
 #[doc(hidden)]
 use colored::Colorize;
-use indicatif::ProgressBar;
-use pkgutils::{download_file, read_repos, get_config};
+use pkgutils::{download_file, get_config, read_repos};
 use prompt::{int_input, prompt_input, select_prompt, select_prompt_string};
+use crate::utils::main::{dep_to_str, print_pkg_details, size_to_str};
+use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::io::Read;
 use std::process::Command;
-use std::thread;
 use std::time::Instant;
 use std::{fs::File, path::Path};
+use toml::Value;
+use walkdir::WalkDir;
 pub mod pkgutils;
 pub mod prompt;
-pub mod viewer;
-use crate::pkgutils::{verify_checksums, get_toml_keys};
-use crate::prompt::confirm_prompt_custom;
-use crate::script::read_build_script;
-use clap::ArgMatches;
-use walkdir::WalkDir;
-
 pub mod script;
-use std::collections::HashMap;
+pub mod utils;
+pub mod viewer;
+use crate::pkgutils::get_toml_keys;
+use crate::prompt::confirm_prompt_custom;
+
+
+
 // ----------------------------
 // Define supported architectures and branches for a package
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 /// Represents a architecture that a package runs on.
-/// 
+///
 /// Options are: x86_64 (X64), x86_32 (X32), arm64 (Apple Silicon & Android/iOS), any (apply to all, like fonts or icons)
 pub enum Architecture {
     X64,
@@ -109,45 +111,25 @@ impl Branch {
         branch
     }
 }
-/// Represents a package's metadata. 
+/// Represents a package's metadata.
 /// Use in package operations and package-related functions.
 pub struct Package {
-    arch: Architecture,
-    branch: Branch,
     name: String,
-    version: String,
-    url: String,
-    dependencies: Vec<String>,
-    download_size: i64,
-    install_size: i64,
+    keys: Value,
 }
 impl Package {
-    pub fn new(
-        arch_input: Architecture,
-        branch_input: Branch,
-        name_input: String,
-        version_input: String,
-        url_input: String,
-        dep_input: Vec<String>,
-        download_input: i64,
-        install_input: i64,
-    ) -> Package {
-        Package {
-            arch: arch_input,
-            branch: branch_input,
-            name: name_input,
-            version: version_input,
-            url: url_input,
-            dependencies: dep_input,
-            download_size: download_input,
-            install_size: install_input,
-        }
+    pub fn new(n: String, k: Value) -> Package {
+        Package { name: n, keys: k }
     }
 }
 //----------------------------
 // Clear terminal
 pub fn clear() {
-    assert!( std::process::Command::new("cls").status().or_else(|_| std::process::Command::new("clear").status()).unwrap().success() );
+    assert!(std::process::Command::new("cls")
+        .status()
+        .or_else(|_| std::process::Command::new("clear").status())
+        .unwrap()
+        .success());
 }
 
 // Download file (terrible, not even async, depends on curl, super insecure)
@@ -169,12 +151,12 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
     let time = Instant::now();
     let current_user: String = whoami::username();
     let config_path: String = get_config();
- 
+
     let mut packages_to_install: Vec<String> = vec![];
     let mut packages: Vec<Package> = vec![];
- 
+
     let mut found_terms: HashMap<&str, bool> = input.iter().map(|&path| (path, false)).collect();
- 
+
     for entry in WalkDir::new(&config_path) {
         let entry = entry?;
         let entry_str = entry.path();
@@ -188,42 +170,31 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
             }
         }
     }
- 
-    let not_found_terms: Vec<String> = found_terms.iter()
+
+    let not_found_terms: Vec<String> = found_terms
+        .iter()
         .filter_map(|(path, found)| if !found { Some(path.to_string()) } else { None })
         .collect();
- 
+
     for pkg in not_found_terms {
-        println!("{} {}. Skipping..", "Could not find result".red(), pkg.yellow())
-    }
- 
-    if packages_to_install.is_empty() {Ok({
         println!(
-            "{}",
-            "Could not find any packages matching the search terms.".yellow()
-        );
-    }) } else {
+            "{} {}. Skipping..",
+            "Could not find result".red(),
+            pkg.yellow()
+        )
+    }
+
+    if packages_to_install.is_empty() {
+        Ok({
+            println!(
+                "{}",
+                "Could not find any packages matching the search terms.".yellow()
+            );
+        })
+    } else {
         for package in packages_to_install {
             let toml_keys = get_toml_keys(package.clone())?;
-            packages.push(Package::new(
-                Architecture::from_str(toml_keys["arch"].as_str().unwrap()),
-                Branch::from_str(toml_keys["branch"].as_str().unwrap()),
-                toml_keys["name"].to_string(),
-                toml_keys["version"].to_string(),
-                toml_keys["url"].to_string(),
-                toml_keys["dependencies"]
-                   .as_array()
-                   .expect(&"Dependencies not found!".yellow())
-                   .iter()
-                   .map(|str| str.to_string())
-                   .collect(),
-                toml_keys
-                   .get("download_size")
-                   .unwrap()
-                   .as_integer()
-                   .unwrap(),
-                toml_keys.get("install_size").unwrap().as_integer().unwrap(),
-            ));
+            packages.push(Package::new(package, toml_keys));
         }
         print!("\n");
 
@@ -246,37 +217,16 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
                     e
                 ),
             }
-            let package_version = package.version.trim_matches('"').purple().bold();
-            if package.dependencies.is_empty() {
-                println!(
-                    "{}{} {}-{}:{} [{}] {} \n",
-                    "=".blue(),
-                    ">".green(),
-                    package.name.to_string().trim_matches('"').purple().bold(),
-                    format!("{package_version}"),
-                    package.branch,
-                    package.arch,
-                    is_installed,
-                )
+
+            if dep_to_str(package.keys.clone()).is_empty() {
+                print_pkg_details(package.keys.clone(), false);
             } else {
-                println!(
-                    "{}{} {}-{}:{} [{}] {} \n{}{} (requires packages {}) \n",
-                    "=".blue(),
-                    ">".green(),
-                    package.name.to_string().trim_matches('"').purple().bold(),
-                    format!("{package_version}"),
-                    package.branch,
-                    package.arch,
-                    is_installed,
-                    "==".blue(),
-                    ">".green(),
-                    package.dependencies.join(" "),
-                );
+                print_pkg_details(package.keys.clone(), true);
             }
-            download_size += package.download_size;
-            install_size += package.install_size;
+            download_size += size_to_str(package.keys.clone(), true);
+            install_size += size_to_str(package.keys.clone(), false);
         }
-        
+
         println!(
             "Download size: {} MB \t Install size: {} MB [Took {:?}]",
             download_size.to_string().green().bold(),
@@ -290,14 +240,23 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
             Ok(true) => Ok({
                 let mut count = 0;
                 println!("[1/5] Downloading packages");
+
                 for package in packages {
-
-                    get_source(package.url.to_string(), package.name.to_string()).unwrap();
+                    let package_name = Path::new(package.keys["name"].as_str().unwrap())
+                        .file_name()
+                        .unwrap()
+                        .to_str()
+                        .unwrap();
+                    match get_source(package.keys["url"].to_string(), package_name.to_string()) {
+                        Ok(url) => url,
+                        Err(e) => {
+                            println!("TOML Metadata does not have a valid url key. \n {e}")
+                        }
+                    };
                     count += 1;
-
                 }
                 println!("[2/5] Verifying checksums");
-                
+
                 // for script in scripts.clone() {
                 //     println!("{script}");
                 //     let bar = ProgressBar::new(count);
@@ -308,22 +267,20 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
                 //     }
                 // }
                 println!("[3/5] Running build scripts");
-                
+
                 println!("[4/5] Running post-install modules");
                 // TODO do this
                 println!("[5/5] Creating .desktop files and adding to $PATH");
                 // TODO this too
             }),
-            Ok(false) => Ok(println!(
-                "{}",
-                "Cancelled install".yellow()
+            Ok(false) => Ok(println!("{}", "Cancelled install".yellow())),
+            Err(e) => Ok(eprintln!(
+                "Caught exception {} when registering confirm prompt.",
+                e
             )),
-            Err(e) => Ok(eprintln!("Caught exception {} when registering confirm prompt.", e)),
         }
-        
     }
-        // ... rest of the function ...
-    }
+}
 // pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error>> {
 //     let time = Instant::now();
 //     // DEFINE VARIABLES
@@ -340,7 +297,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
 //     //----------------------------------------------------a
 //     // ADD VARIABLES TO INSTALL LIST
 //     for &path in &input { found_terms.insert(path, false); }
-    
+
 //     for entry in WalkDir::new(&config_path) {
 //         let entry = entry.unwrap();
 //         let entry_str = entry.path();
@@ -354,7 +311,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
 //             }
 //         }
 //     }
-    
+
 //     for (path, found) in &found_terms {
 //         if !found {
 //             not_found_terms.push(path.to_string());
@@ -367,7 +324,6 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
 //         }
 //         println!("{} {}. Skipping..", "Could not find result".red(), pkg.yellow())
 //     }
-    
 
 //     if packages_to_install.is_empty() {
 //         println!(
@@ -456,7 +412,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
 //             download_size += package.download_size;
 //             install_size += package.install_size;
 //         }
-        
+
 //         println!(
 //             "Download size: {} MB \t Install size: {} MB [Took {:?}]",
 //             download_size.to_string().green().bold(),
@@ -477,7 +433,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
 
 //                 }
 //                 println!("[2/5] Verifying checksums");
-                
+
 //                 // for script in scripts.clone() {
 //                 //     println!("{script}");
 //                 //     let bar = ProgressBar::new(count);
@@ -489,7 +445,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
 //                 // }
 //                 println!("[3/5] Running build scripts");
 //                 for script in scripts { read_build_script(script); }
-                
+
 //                 println!("[4/5] Running post-install modules");
 //                 // TODO do this
 //                 println!("[5/5] Creating .desktop files and adding to $PATH");
@@ -501,13 +457,16 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
 //             ),
 //             Err(e) => eprintln!("Caught exception {} when registering confirm prompt.", e),
 //         }
-        
+
 //     }
 //     Ok(())
 // }
 
 /// Sub-function of install_package that creates the package's directory and begins the download.
-fn get_source(url_location: String, package_name: String) -> Result<(), Box<dyn std::error::Error>> {
+fn get_source(
+    url_location: String,
+    package_name: String,
+) -> Result<(), Box<dyn std::error::Error>> {
     let username = whoami::username();
     let package_name = package_name.trim_matches('"');
     let package_dir = format!("/home/{username}/Apps/{}", package_name);

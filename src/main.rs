@@ -2,20 +2,24 @@
 //              Advanced Portable Package Loader
 //           Developed by teqnok [teqnok@proton.me]
 //      Released in the public domain via the Unlicense
+// please dont use this :>
 //------------------------------------------------------------------------------
 
-use appl::{collect_input, install_package, new_package, viewer::script_viewer};
+use appl::{collect_input, install_package, new_package};
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 use std::path::Path;
+use utils::main::{read_pkg_file, get_pkg_info};
 use whoami;
 
-use crate::{setup::setup, pkgutils::generate_checksum};
+use crate::{pkgutils::generate_checksum, setup::setup};
+pub mod file;
 mod help;
 pub mod pkgutils;
 pub mod prompt;
 pub mod script;
 pub mod setup;
+pub mod utils;
 fn main() {
     let current_user: String = whoami::username();
     // These lines check for a config file that doesnt exist, will fix. TODO
@@ -49,7 +53,6 @@ fn main() {
                         .action(ArgAction::Set),
                 ),
         )
-        
         .subcommand(
             Command::new("new")
                 .about("Create a new TOML Script from prompts")
@@ -96,37 +99,37 @@ fn main() {
                 .about("Show information about the given package")
                 .subcommand(
                     Command::new("gen_hash")
-                                .about("Generate a SHA2-256 hash using the package's source")
-                                .arg(Arg::new("package").index(1).action(ArgAction::Set))
+                        .about("Generate a SHA2-256 hash using the package's source")
+                        .arg(Arg::new("package").index(1).action(ArgAction::Set)),
                 )
                 .subcommand(
                     Command::new("build")
-                                .about("Run a package's build[] function.")
-                                .arg(Arg::new("package").index(1).action(ArgAction::Set))
+                        .about("Run a package's build[] function.")
+                        .arg(Arg::new("package").index(1).action(ArgAction::Set)),
                 )
                 .arg(Arg::new("package").index(1).action(ArgAction::Set)),
-                
         )
         .get_matches();
 
     match matches.subcommand() {
         Some(("install", install_matches)) => {
             let packages = collect_input(install_matches);
-            println!("Searching for {} packages...", packages.len());
+            if packages.len() == 1 {
+                println!("Searching for a package...")
+            } else {
+                println!("Searching for {} packages...", packages.len());
+            }
+            let _ = get_pkg_info(packages.clone());
             let _ = install_package(packages.clone());
         }
-        Some(("query", query_matches)) => {
-            match query_matches.subcommand() {
-                Some(("gen_hash", hash_matches)) => {
-                    let matches = collect_input(hash_matches);
-                    generate_checksum(matches[0])
-                },
-                Some(("build", build_matches)) => {
-                    
-                },
-                _ => {}
+        Some(("query", query_matches)) => match query_matches.subcommand() {
+            Some(("gen_hash", hash_matches)) => {
+                let matches = collect_input(hash_matches);
+                generate_checksum(matches[0])
             }
-        }
+            Some(("build", _build_matches)) => {}
+            _ => {}
+        },
         Some(("new", _new_matches)) => {
             new_package();
         }
@@ -138,6 +141,8 @@ fn main() {
         Some(("setup", _setup_matches)) => {
             setup();
         }
-        _ => { help::print_help(); },
+        _ => {
+            help::print_help();
+        }
     }
 }

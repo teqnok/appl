@@ -13,7 +13,6 @@ dialoguer = "0.10.4"
 futures-util = "0.3.28"
 indicatif = "0.17.6"
 reqwest = { version = "0.11.22", features = ["stream"] }
-sevenz-rust = { version = "0.5.3", features = ["aes256"] }
 syntect = "5.1.0"
 tokio = { version = "1.33.0", features = ["macros", "rt-multi-thread"] }
 toml = "0.8.2"

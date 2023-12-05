@@ -14,9 +14,9 @@ use std::path::PathBuf;
 #[tokio::main]
 // Downloading function. (sends a HTTP GET request to a URL and saves it to the $path var)
 /// Core function for downloading a file to disk.
-/// 
+///
 /// Takes a URL, path and display name and downloads with progress bar and ETA.
-/// Once implemented, use the download!() macro instead. 
+/// Once implemented, use the download!() macro instead.
 pub async fn download_file(
     url: &str,
     path: &str,
@@ -49,7 +49,12 @@ pub async fn download_file(
         .unwrap()
         .progress_chars("#>-"),
     );
-    pb.set_message(format!("{}{} {}", "=".blue(), ">".green(), name.bold().green()));
+    pb.set_message(format!(
+        "{}{} {}",
+        "=".blue(),
+        ">".green(),
+        name.bold().green()
+    ));
     // Open the file in write-only mode
     std::fs::create_dir_all(new_path.parent().unwrap())?;
     let mut file = std::fs::File::create(format!("{path}.tar.gz"))?;
@@ -122,10 +127,10 @@ pub fn get_config() -> String {
 }
 /// Return the script folder on both *nix and Windows.
 /// # Examples
-/// 
+///
 /// ```
 /// let config = get_config();
-/// assert_eq!(config, std::path::Path::new("~/.config/appl/")); 
+/// assert_eq!(config, std::path::Path::new("~/.config/appl/"));
 /// ```
 #[cfg(not(windows))]
 pub fn get_config() -> String {
@@ -143,7 +148,7 @@ pub fn get_app_name(term: &str) -> String {
         let ffile = file.unwrap();
         let path = ffile.path();
         if Path::new(term) == path.file_name().unwrap() {
-            return String::from(path.as_os_str().to_str().unwrap())
+            return String::from(path.as_os_str().to_str().unwrap());
         }
     }
     "/tmp/".into()
@@ -151,7 +156,6 @@ pub fn get_app_name(term: &str) -> String {
 
 use std::io::Read;
 
-use crate::script::get_build_func;
 /// An improved version of read_toml() that properly handles errors and runs some boilerplate.
 /// # Examples
 /// ```
@@ -159,7 +163,7 @@ use crate::script::get_build_func;
 /// let config = get_config();
 /// let keys = get_toml_keys(format!("{config}/vim.toml")).unwrap();
 /// assert_eq!(keys["name"].to_string().trim_matches('"'), "vim");
-/// ``` 
+/// ```
 pub fn get_toml_keys(file: String) -> Result<toml::Value, Box<dyn std::error::Error>> {
     let path = Path::new(&file);
     let display = path.display();
@@ -175,7 +179,12 @@ pub fn get_toml_keys(file: String) -> Result<toml::Value, Box<dyn std::error::Er
     }
     let toml_keys: Result<toml::Value, toml::de::Error> = toml::from_str(&string);
     let toml_keys = toml_keys.map_err(|e| {
-        println!("{}{}", "Failed to parse TOML script. Either repair the script or use a different package. \n".yellow(),e.to_string().yellow());
+        println!(
+            "{}{}",
+            "Failed to parse TOML script. Either repair the script or use a different package. \n"
+                .yellow(),
+            e.to_string().yellow()
+        );
         std::io::Error::new(std::io::ErrorKind::Other, e)
     })?;
     Ok(toml_keys)

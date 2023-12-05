@@ -1,6 +1,6 @@
-use std::io::Error;
 use colored::{ColoredString, Colorize};
-use dialoguer::{console::Term, theme::ColorfulTheme, Confirm, Password, Select};
+use dialoguer::{console::Term, theme::ColorfulTheme, Password, Select};
+use std::io::Error;
 
 pub fn select_prompt(items: Vec<&str>, prompt: String) -> std::io::Result<&str> {
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -10,9 +10,7 @@ pub fn select_prompt(items: Vec<&str>, prompt: String) -> std::io::Result<&str> 
         .interact_on_opt(&Term::stderr())?;
     let mut select = "";
     match selection {
-        Some(index) => {
-            select = items[index]
-        }
+        Some(index) => select = items[index],
         None => println!("User did not select anything"),
     }
 
@@ -76,7 +74,7 @@ use std::io::Write;
 /// # use appl::prompt::confirm_prompt_custom;
 /// let confirm = confirm_prompt_custom("Do you like apples?").unwrap();
 /// // Do you like apples? [y/n] >
-/// ``` 
+/// ```
 pub fn confirm_prompt_custom(display_text: String) -> Result<bool, Error> {
     let mut input: String = String::new();
     let mut confirmed: bool = false;

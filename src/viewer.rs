@@ -1,12 +1,10 @@
-
-use syntect::easy::HighlightLines;
-use syntect::parsing::SyntaxSet;
-use syntect::highlighting::{ThemeSet, Style};
-use syntect::util::as_24_bit_terminal_escaped;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-
+use syntect::easy::HighlightLines;
+use syntect::highlighting::{Style, ThemeSet};
+use syntect::parsing::SyntaxSet;
+use syntect::util::as_24_bit_terminal_escaped;
 
 pub fn script_viewer(script: String) {
     let path = Path::new(script.as_str());
@@ -22,6 +20,5 @@ pub fn script_viewer(script: String) {
         let ranges: Vec<(Style, &str)> = h.highlight_line(&line, &ps).unwrap();
         let escaped = as_24_bit_terminal_escaped(&ranges[..], true);
         println!("{}", escaped);
-     }
-    
+    }
 }
