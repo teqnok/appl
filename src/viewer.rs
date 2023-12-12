@@ -8,7 +8,7 @@ use syntect::util::as_24_bit_terminal_escaped;
 
 pub fn script_viewer(script: String) {
     let path = Path::new(script.as_str());
-    let file = File::open(&path).unwrap();
+    let file = File::open(path).unwrap();
     let reader = io::BufReader::new(file);
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();

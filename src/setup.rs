@@ -39,9 +39,9 @@ pub fn setup() -> u32 {
     } else {
         println!("Bash not found, build scripts will not be able to use the 'bash' command.");
     }
-    println!("");
+    println!();
 
-    println!("");
+    println!();
     0
 }
 #[cfg(not(windows))]

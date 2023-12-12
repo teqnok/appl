@@ -43,7 +43,7 @@ impl CompressionTypes {
             } else {
                 if let Some(p) = outpath.parent() {
                     if !p.exists() {
-                        std::fs::create_dir_all(&p)?;
+                        std::fs::create_dir_all(p)?;
                     }
                 }
                 let mut outfile = File::create(&outpath)?;
@@ -249,7 +249,7 @@ fn read_toml(file: String) -> String {
     let path = Path::new(&file);
     let display = path.display();
 
-    let mut file = match File::open(&path) {
+    let mut file = match File::open(path) {
         Ok(file) => file,
         Err(e) => panic!("Could not open File {}", e),
     };

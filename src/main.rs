@@ -9,12 +9,11 @@ use appl::{collect_input, install_package, new_package};
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 use std::path::Path;
-use utils::main::{read_pkg_file, get_pkg_info};
-use whoami;
+use utils::main::{get_pkg_info, pkg_search};
+
 
 use crate::{pkgutils::generate_checksum, setup::setup};
 pub mod file;
-mod help;
 pub mod pkgutils;
 pub mod prompt;
 pub mod script;
@@ -40,7 +39,7 @@ fn main() {
         .subcommand_required(false)
         // This should be false for dev and true for prod
         .arg_required_else_help(false)
-        .override_help(help::HELP)
+        .arg_required_else_help(true)
         .author("teqnok [teqnok@proton.me]")
         .subcommand(
             Command::new("install")
@@ -104,8 +103,13 @@ fn main() {
                 )
                 .subcommand(
                     Command::new("build")
-                        .about("Run a package's build[] function.")
+                        .about("Run a package's build function.")
                         .arg(Arg::new("package").index(1).action(ArgAction::Set)),
+                )
+                .subcommand(
+                    Command::new("search")
+                        .about("Search for a package")
+                        .arg(Arg::new("package").index(1).action(ArgAction::Set))
                 )
                 .arg(Arg::new("package").index(1).action(ArgAction::Set)),
         )
@@ -126,8 +130,12 @@ fn main() {
             Some(("gen_hash", hash_matches)) => {
                 let matches = collect_input(hash_matches);
                 generate_checksum(matches[0])
+            },
+            Some(("build", _build_matches)) => {},
+            Some(("search", search_matches)) => {
+                let m = collect_input(search_matches);
+                let _ = get_pkg_info(m.into());
             }
-            Some(("build", _build_matches)) => {}
             _ => {}
         },
         Some(("new", _new_matches)) => {
@@ -142,7 +150,7 @@ fn main() {
             setup();
         }
         _ => {
-            help::print_help();
+            
         }
     }
 }

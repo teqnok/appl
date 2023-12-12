@@ -95,27 +95,23 @@ pub fn read_repos() -> Result<Vec<String>, Box<dyn Error>> {
 
 pub fn verify_checksums(path: &Path) -> bool {
     let file = path.to_str().unwrap();
-    let keys = get_toml_keys(file.to_owned());
+    let keys = get_toml_keys(file.to_owned(), true);
     let expected: String = keys.unwrap()["checksum"].to_string();
     let hash = hash_file(path, checksums::Algorithm::SHA2256);
     println!("{hash}");
     println!("{expected}");
-    if hash == expected {
-        true
-    } else {
-        false
-    }
+    hash == expected
 }
 // Generate a packages checksum then echo it to user.
 // TODO make this work with build scripts
 pub fn generate_checksum(path: &str) {
     let rpath = get_config();
-    let keys = get_toml_keys(format!("{rpath}{path}.toml")).unwrap();
+    let keys = get_toml_keys(format!("{rpath}{path}.toml"), true).unwrap();
     let url = keys["url"].to_string();
     let name = keys["name"].to_string();
     let path = &format!("{}{}", get_config(), "appl_tmp_checksum");
     let _ = download_file(&url, path.as_str(), name.green());
-    let hash = hash_file(&Path::new(path), checksums::Algorithm::SHA2256);
+    let hash = hash_file(Path::new(path), checksums::Algorithm::SHA2256);
     println!("{}: {}", "Checksum".green(), hash.blue());
     let _ = fs::remove_file(path);
 }
@@ -164,18 +160,23 @@ use std::io::Read;
 /// let keys = get_toml_keys(format!("{config}/vim.toml")).unwrap();
 /// assert_eq!(keys["name"].to_string().trim_matches('"'), "vim");
 /// ```
-pub fn get_toml_keys(file: String) -> Result<toml::Value, Box<dyn std::error::Error>> {
-    let path = Path::new(&file);
-    let display = path.display();
-
-    let mut file = match File::open(&path) {
-        Ok(file) => file,
-        Err(e) => panic!("Could not open File {}", e),
-    };
+pub fn get_toml_keys(file: String, is_file: bool) -> Result<toml::Value, Box<dyn std::error::Error>> {
     let mut string = String::new();
-    match file.read_to_string(&mut string) {
-        Err(why) => panic!("couldn't read {}: {}", display, why),
-        Ok(_) => {}
+    if is_file {
+        let path = Path::new(&file);
+        let display = path.display();
+        
+        let mut file = match File::open(path) {
+            Ok(file) => file,
+            Err(e) => panic!("Could not open File {}", e),
+        };
+                                                                                                                                                                                             
+        match file.read_to_string(&mut string) {
+            Err(why) => panic!("couldn't read {}: {}", display, why),
+            Ok(_) => {}
+        }
+    } else {
+        string = file;
     }
     let toml_keys: Result<toml::Value, toml::de::Error> = toml::from_str(&string);
     let toml_keys = toml_keys.map_err(|e| {

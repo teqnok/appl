@@ -1,6 +1,6 @@
 [package]
 name = "appl"
-version = "0.1.0"
+version = "0.6.9"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -16,6 +16,7 @@ reqwest = { version = "0.11.22", features = ["stream"] }
 syntect = "5.1.0"
 tokio = { version = "1.33.0", features = ["macros", "rt-multi-thread"] }
 toml = "0.8.2"
+toml_edit = "0.21.0"
 walkdir = "2.4.0"
 whoami = "1.4.1"
 zip = "0.6.6"

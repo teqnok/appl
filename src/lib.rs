@@ -157,7 +157,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
 
     let mut found_terms: HashMap<&str, bool> = input.iter().map(|&path| (path, false)).collect();
 
-    for entry in WalkDir::new(&config_path) {
+    for entry in WalkDir::new(config_path) {
         let entry = entry?;
         let entry_str = entry.path();
         let entry_path = entry_str.with_extension("");
@@ -193,10 +193,10 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
         })
     } else {
         for package in packages_to_install {
-            let toml_keys = get_toml_keys(package.clone())?;
+            let toml_keys = get_toml_keys(package.clone(), false)?;
             packages.push(Package::new(package, toml_keys));
         }
-        print!("\n");
+        println!();
 
         println!("Packages to install: \n \t");
         let mut download_size: i64 = 0;
@@ -510,7 +510,7 @@ fn read_toml(file: String) -> String {
     let path = Path::new(&file);
     let display = path.display();
 
-    let mut file = match File::open(&path) {
+    let mut file = match File::open(path) {
         Ok(file) => file,
         Err(e) => panic!("Could not open File {}", e),
     };

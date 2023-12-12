@@ -97,7 +97,7 @@ dependencies = [
 
 [[package]]
 name = "appl"
-version = "0.1.0"
+version = "0.6.9"
 dependencies = [
  "checksums",
  "clap 4.3.23",
@@ -110,6 +110,7 @@ dependencies = [
  "syntect",
  "tokio",
  "toml",
+ "toml_edit",
  "walkdir",
  "whoami",
  "zip",
