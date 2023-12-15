@@ -5,12 +5,12 @@
 //
 //------------------------------------------------------------------------------------------
 // use checksums::{hash_file, Algorithm};
+use crate::utils::main::{dep_to_str, print_pkg_details, size_to_str};
 use clap::ArgMatches;
 #[doc(hidden)]
 use colored::Colorize;
 use pkgutils::{download_file, get_config, read_repos};
 use prompt::{int_input, prompt_input, select_prompt, select_prompt_string};
-use crate::utils::main::{dep_to_str, print_pkg_details, size_to_str};
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::io::Read;
@@ -24,10 +24,9 @@ pub mod prompt;
 pub mod script;
 pub mod utils;
 pub mod viewer;
+
 use crate::pkgutils::get_toml_keys;
 use crate::prompt::confirm_prompt_custom;
-
-
 
 // ----------------------------
 // Define supported architectures and branches for a package
@@ -193,6 +192,7 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
         })
     } else {
         for package in packages_to_install {
+            println!("haha funny");
             let toml_keys = get_toml_keys(package.clone(), false)?;
             packages.push(Package::new(package, toml_keys));
         }
@@ -219,9 +219,9 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
             }
 
             if dep_to_str(package.keys.clone()).is_empty() {
-                print_pkg_details(package.keys.clone(), false);
+                print_pkg_details(package.keys.clone(), utils::main::ApplOperation::Install);
             } else {
-                print_pkg_details(package.keys.clone(), true);
+                print_pkg_details(package.keys.clone(), utils::main::ApplOperation::Install);
             }
             download_size += size_to_str(package.keys.clone(), true);
             install_size += size_to_str(package.keys.clone(), false);
@@ -523,61 +523,24 @@ fn read_toml(file: String) -> String {
     string
 }
 
-pub fn new_package() {
-    let new_name = prompt_input("What is the name of the package?".green());
-    let new_branch = select_prompt(
-        vec!["prod", "git", "nightly", "beta", "dev"],
-        "What is the development branch of this package?".into(),
-    );
-    let new_arch = select_prompt(
-        vec!["X64", "X32", "arm64", "any"],
-        "What is this packages architecture?".into(),
-    );
-    let new_version = prompt_input("What is the version?".green().bold());
-    let new_url = prompt_input(
-        "Where is the projects source code? Input a download link."
-            .green()
-            .bold(),
-    );
-    let new_dsize = int_input(
-        "What is the package's size to download (MiB)?"
-            .bold()
-            .green(),
-    );
-    let new_isize = int_input(
-        "What is the package's size when installed (MiB)?"
-            .bold()
-            .green(),
-    );
-    let repo = select_prompt_string(
-        read_repos().unwrap(),
-        "Which repository should this package belong in?".into(),
-    );
-    let new_branch_u = new_branch.unwrap();
-    let new_arch_u = new_arch.unwrap();
-    let toml_string = format!(
-        "
-    name = {new_name} 
-    branch = {new_branch_u} 
-    arch = {new_arch_u} 
-    version = {new_version} 
-    url = {new_url} 
-    download_size = {new_dsize} 
-    install_size = {new_isize} 
-    build = [
-        'Put a build script here',
-        'Then publish this file.'
-    ]
-    "
-    );
-    println!("{toml_string}");
-    let repo_print = repo.unwrap();
-    let write_confirm = confirm_prompt_custom(format!(
-        "Write this package to '~/.config/appl/{repo_print}/{new_name}.toml'?"
-    ))
-    .unwrap();
-    if write_confirm {
-    } else {
-        println!("{}", "Cancelling".red())
+#[cfg(tests)]
+mod tests {
+    use std::time::Instant;
+
+    use crate::{download_file, pkgutils::get_config};
+    #[test]
+    fn download_test() {
+        let t = Instant::now();
+        for file in 1..5 {
+            let time = Instant::now();
+            println!("Downloading file {file} of 5: ");
+            let _ = download_file(
+                "https://link.testfile.org/60MB",
+                &get_config(),
+                file.to_string().as_str().into(),
+            );
+            println!("Took {:?}", time.elapsed());
+        }
+        println!("Total time: {:?}", t.elapsed());
     }
 }

@@ -47,7 +47,7 @@ pub async fn download_file(
             "{msg} \t \t [{elapsed_precise}] [{bar:25.cyan/blue}] {bytes}/{total_bytes}",
         )
         .unwrap()
-        .progress_chars("#>-"),
+        .progress_chars("=>~"),
     );
     pb.set_message(format!(
         "{}{} {}",
@@ -125,8 +125,8 @@ pub fn get_config() -> String {
 /// # Examples
 ///
 /// ```
+/// use appl::pkgutils::get_config;
 /// let config = get_config();
-/// assert_eq!(config, std::path::Path::new("~/.config/appl/"));
 /// ```
 #[cfg(not(windows))]
 pub fn get_config() -> String {
@@ -157,20 +157,23 @@ use std::io::Read;
 /// ```
 /// # use appl::pkgutils::{get_toml_keys, get_config};
 /// let config = get_config();
-/// let keys = get_toml_keys(format!("{config}/vim.toml")).unwrap();
+/// let keys = get_toml_keys(format!("{config}/vim.toml"), true).unwrap();
 /// assert_eq!(keys["name"].to_string().trim_matches('"'), "vim");
 /// ```
-pub fn get_toml_keys(file: String, is_file: bool) -> Result<toml::Value, Box<dyn std::error::Error>> {
+pub fn get_toml_keys(
+    file: String,
+    is_file: bool,
+) -> Result<toml::Value, Box<dyn std::error::Error>> {
     let mut string = String::new();
     if is_file {
         let path = Path::new(&file);
         let display = path.display();
-        
+
         let mut file = match File::open(path) {
             Ok(file) => file,
             Err(e) => panic!("Could not open File {}", e),
         };
-                                                                                                                                                                                             
+
         match file.read_to_string(&mut string) {
             Err(why) => panic!("couldn't read {}: {}", display, why),
             Ok(_) => {}

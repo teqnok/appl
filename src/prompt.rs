@@ -72,7 +72,7 @@ use std::io::Write;
 /// # Examples
 /// ```
 /// # use appl::prompt::confirm_prompt_custom;
-/// let confirm = confirm_prompt_custom("Do you like apples?").unwrap();
+/// let confirm = confirm_prompt_custom("Do you like apples?".to_string()).unwrap();
 /// // Do you like apples? [y/n] >
 /// ```
 pub fn confirm_prompt_custom(display_text: String) -> Result<bool, Error> {
