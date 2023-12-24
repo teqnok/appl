@@ -39,7 +39,8 @@ pub fn setup() -> u32 {
     } else {
         println!("Bash not found, build scripts will not be able to use the 'bash' command.");
     }
-    println!();
+    println!("{}", "[5/6] Writing config file");
+    
 
     println!();
     0
@@ -48,8 +49,9 @@ pub fn setup() -> u32 {
 fn make_configs() {
     let uname = whoami::username();
 
-    fs::create_dir(format!("/home/{uname}/.config/appl"));
-    fs::create_dir(format!("/home/{uname}/Apps/"));
+    let _ = fs::create_dir(format!("/home/{uname}/.config/appl"));
+    let _ = fs::create_dir(format!("/home/{uname}/Apps/"));
+    let _ = fs::write(format!("/home/{uname}/.config/appl/appl.toml"), "[db] \nextra='./extra'\nmain='./main/'");
 }
 #[cfg(windows)]
 fn make_configs() {

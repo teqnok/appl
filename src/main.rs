@@ -5,10 +5,11 @@
 // please dont use this :>
 //------------------------------------------------------------------------------
 
-use appl::{collect_input, install_package};
+use appl::collect_input;
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
-use std::path::Path;
+use script::main::read_script;
+use std::path::{Path, PathBuf}; 
 use utils::main::get_pkg_info;
 
 use crate::{pkgutils::generate_checksum, setup::setup};
@@ -18,7 +19,8 @@ pub mod script;
 pub mod setup;
 pub mod utils;
 fn main() {
-    let current_user: String = whoami::username();
+    read_script(PathBuf::from("/home/teqnok/Documents/vim.apkg"));
+    let current_user: String = whoami::username(); 
     // These lines check for a config file that doesnt exist, will fix. TODO
     match Path::new(&format!("/home/{current_user}/.config/appl/")).try_exists() {
         Ok(true) => {}
@@ -26,7 +28,7 @@ fn main() {
             setup();
         }
         Err(e) => {
-            println!("Caught exception when looking for config file: {:?}", e)
+            println!("Caught exception when looking for config file: {e:?}")
         }
     }
 
@@ -118,7 +120,7 @@ fn main() {
             Some(("build", _build_matches)) => {}
             Some(("search", search_matches)) => {
                 let m = collect_input(search_matches);
-                let _ = get_pkg_info(m.into());
+                let _ = get_pkg_info(m);
             }
             _ => {}
         },

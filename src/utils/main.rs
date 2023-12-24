@@ -2,7 +2,7 @@ use crate::pkgutils::{get_config, get_toml_keys};
 use crate::prompt::confirm_prompt_custom;
 use colored::{ColoredString, Colorize};
 use std::error::Error;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -27,7 +27,7 @@ where
 
             query
                 .iter()
-                .find(|q| q.to_string().trim_matches('"') == rpkg.to_string())
+                .find(|q| q.to_string().trim_matches('"') == rpkg)
                 .map(|_| pkgpath)
         })
         .collect();
@@ -55,7 +55,7 @@ where
         );
         let confirm = confirm_prompt_custom("Install these packages?".into())?;
         if confirm {
-
+            
         } else {}
     } else {
         println!("No matches found for terms {:?}", query);
@@ -104,21 +104,29 @@ pub fn pkg_search<T: ToString + PartialEq>(query: T) -> Result<String, Box<dyn s
 //------------------------------------------------------
 /// Read dependencies into a vector
 pub fn dep_to_str(a: Value) -> Vec<String> {
-    let p: Vec<String> = a["dependencies"]
-        .as_array()
-        .expect(&"Dependencies not found!".yellow())
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
-    p
+    let mut deps: Vec<String> = vec![];
+    match a.get("dependencies") {
+        Some(v) => {deps = v.as_array()
+            .unwrap_or_else(|| { panic!("{}", "Dependencies not found!".yellow().to_string()) })
+            .iter()
+            .map(|s| s.to_string())
+            .collect()},
+        None => {println!("Dependencies array not found. The package may be incomplete.")}
+    }
+    deps
+    
 }
 /// Read download/install size into int
 pub fn size_to_str(a: Value, is_dsize: bool) -> i64 {
+    let mut int = 0;
     let mut str = "install_size";
     if is_dsize {
         str = "download_size"
     }
-    let int = a.get(str).unwrap().as_integer().unwrap();
+    match a.get(str) {
+        Some(a) => {int = a.as_integer().unwrap_or(0)},
+        None => {println!("Package does not have an install size. The package may be incomplete")}
+    };
     int
 }
 //---------------------------------------------------------------------------
@@ -133,14 +141,22 @@ pub enum ApplOperation {
 /// v: Package keys (toml::Value)
 /// o: What operation is being performed
 pub fn print_pkg_details(v: Value, o: ApplOperation) {
-    let __name__ = v["name"].to_string();
-    let package_name = __name__.trim_matches('"');
+    let mut name = "n/a";
+    let _b = v.clone();
+    match _b.get("name") {
+        Some(n) => {name = n.as_str().unwrap()},
+        None => eprintln!("Package does not have a name. The package may be corrupted or incomplete."),
+    }; 
+    let package_name = name.trim_matches('"');
     let is_installed = if Path::new(&format!("{}{}", get_config(), package_name)).exists() {
         "[installed]".blue().bold()
     } else {
         "".white()
     };
-    let package_version: ColoredString = v["version"].to_string().trim_matches('"').purple().bold();
+    let package_version: ColoredString = v.get("version")
+        .map(|e| e.to_string().purple().bold())
+        .unwrap_or("0.0.0".purple().bold())
+        .trim_matches('"').purple().bold();
     let arch: ColoredString = v
         .get("arch")
         .map(|e| e.to_string().green())
@@ -189,3 +205,4 @@ pub fn print_pkg_details(v: Value, o: ApplOperation) {
         }
     }
 }
+

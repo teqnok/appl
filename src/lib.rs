@@ -5,18 +5,17 @@
 //
 //------------------------------------------------------------------------------------------
 // use checksums::{hash_file, Algorithm};
-use crate::utils::main::{dep_to_str, print_pkg_details, size_to_str};
+use crate::utils::main::{print_pkg_details, size_to_str};
 use clap::ArgMatches;
 #[doc(hidden)]
 use colored::Colorize;
-use pkgutils::{download_file, get_config, read_repos};
-use prompt::{int_input, prompt_input, select_prompt, select_prompt_string};
+use pkgutils::{download_file, get_config};
 use std::collections::HashMap;
 use std::fmt::{self, Display};
-use std::io::Read;
+
 use std::process::Command;
 use std::time::Instant;
-use std::{fs::File, path::Path};
+use std::{path::Path};
 use toml::Value;
 use walkdir::WalkDir;
 pub mod pkgutils;
@@ -218,11 +217,9 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
                 ),
             }
 
-            if dep_to_str(package.keys.clone()).is_empty() {
-                print_pkg_details(package.keys.clone(), utils::main::ApplOperation::Install);
-            } else {
-                print_pkg_details(package.keys.clone(), utils::main::ApplOperation::Install);
-            }
+            
+            print_pkg_details(package.keys.clone(), utils::main::ApplOperation::Install);
+
             download_size += size_to_str(package.keys.clone(), true);
             install_size += size_to_str(package.keys.clone(), false);
         }
@@ -237,42 +234,45 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
         let confirm_package_install: Result<bool, std::io::Error> =
             confirm_prompt_custom(String::from("Install these packages?"));
         match confirm_package_install {
-            Ok(true) => Ok({
-                let mut count = 0;
-                println!("[1/5] Downloading packages");
+            Ok(true) => {
+                {
+                    let mut count = 0;
+                    println!("[1/5] Downloading packages");
 
-                for package in packages {
-                    let package_name = Path::new(package.keys["name"].as_str().unwrap())
-                        .file_name()
-                        .unwrap()
-                        .to_str()
-                        .unwrap();
-                    match get_source(package.keys["url"].to_string(), package_name.to_string()) {
-                        Ok(url) => url,
-                        Err(e) => {
-                            println!("TOML Metadata does not have a valid url key. \n {e}")
-                        }
-                    };
-                    count += 1;
-                }
-                println!("[2/5] Verifying checksums");
+                    for package in packages {
+                        let package_name = Path::new(package.keys["name"].as_str().unwrap())
+                            .file_name()
+                            .unwrap()
+                            .to_str()
+                            .unwrap();
+                        match get_source(package.keys["url"].to_string(), package_name.to_string()) {
+                            Ok(url) => url,
+                            Err(e) => {
+                                println!("TOML Metadata does not have a valid url key. \n {e}")
+                            }
+                        };
+                        count += 1;
+                    }
+                    println!("[2/5] Verifying checksums");
 
-                // for script in scripts.clone() {
-                //     println!("{script}");
-                //     let bar = ProgressBar::new(count);
-                //     if verify_checksums(&Path::new(&script)) {
-                //         bar.inc(1)
-                //     } else {
-                //         panic!("A checksum was unable to be verified correctly. The file may be corrupted or malicious.");
-                //     }
-                // }
-                println!("[3/5] Running build scripts");
+                    // for script in scripts.clone() {
+                    //     println!("{script}");
+                    //     let bar = ProgressBar::new(count);
+                    //     if verify_checksums(&Path::new(&script)) {
+                    //         bar.inc(1)
+                    //     } else {
+                    //         panic!("A checksum was unable to be verified correctly. The file may be corrupted or malicious.");
+                    //     }
+                    // }
+                    println!("[3/5] Running build scripts");
 
-                println!("[4/5] Running post-install modules");
-                // TODO do this
-                println!("[5/5] Creating .desktop files and adding to $PATH");
-                // TODO this too
-            }),
+                    println!("[4/5] Running post-install modules");
+                    // TODO do this
+                    println!("[5/5] Creating .desktop files and adding to $PATH")
+                    // TODO this too
+                };
+                Ok(())
+            },
             Ok(false) => Ok(println!("{}", "Cancelled install".yellow())),
             Err(e) => Ok(eprintln!(
                 "Caught exception {} when registering confirm prompt.",
@@ -281,186 +281,6 @@ pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error
         }
     }
 }
-// pub fn install_package(input: Vec<&str>) -> Result<(), Box<dyn std::error::Error>> {
-//     let time = Instant::now();
-//     // DEFINE VARIABLES
-//     let current_user: String = whoami::username(); //
-//     let config_path: String = get_config();
-
-//     // METADATA VECTORS
-//     let mut packages_to_install: Vec<String> = vec![]; //
-//     let mut packages: Vec<Package> = vec![];
-
-//     let mut found_terms: HashMap<&str, bool> = HashMap::new();
-//     let mut not_found_terms = Vec::new();
-//     let mut scripts = Vec::new();
-//     //----------------------------------------------------a
-//     // ADD VARIABLES TO INSTALL LIST
-//     for &path in &input { found_terms.insert(path, false); }
-
-//     for entry in WalkDir::new(&config_path) {
-//         let entry = entry.unwrap();
-//         let entry_str = entry.path();
-//         let entry_path = entry_str.with_extension("");
-//         if let Some(file_name) = entry_path.file_name() {
-//             let file_name_str = file_name.to_str().unwrap();
-//             if let Some(found) = found_terms.get_mut(file_name_str) {
-//                 *found = true;
-//                 let pkg_path = entry_str.to_str().unwrap().to_string();
-//                 packages_to_install.push(pkg_path);
-//             }
-//         }
-//     }
-
-//     for (path, found) in &found_terms {
-//         if !found {
-//             not_found_terms.push(path.to_string());
-//         }
-//     }
-
-//     for pkg in not_found_terms {
-//         if packages_to_install.is_empty() {
-//             break;
-//         }
-//         println!("{} {}. Skipping..", "Could not find result".red(), pkg.yellow())
-//     }
-
-//     if packages_to_install.is_empty() {
-//         println!(
-//             "{}",
-//             "Could not find any packages matching the search terms.".yellow()
-//         );
-//     } else {
-
-//         // Add packages to a vector, to print a line for each package
-//         for package in packages_to_install {
-//             println!(
-//                 "{} Package found at: {}",
-//                 "->".purple(),
-//                 package.bright_blue().bold()
-//             );
-//             let toml_keys = get_toml_keys(package.clone()).unwrap();
-//             packages.push(Package::new(
-//                 Architecture::from_str(toml_keys["arch"].as_str().unwrap()),
-//                 Branch::from_str(toml_keys["branch"].as_str().unwrap()),
-//                 toml_keys["name"].to_string(),
-//                 toml_keys["version"].to_string(),
-//                 toml_keys["url"].to_string(),
-//                 toml_keys["dependencies"]
-//                     .as_array()
-//                     .expect(&"Dependencies not found!".yellow())
-//                     .iter()
-//                     .map(|str| str.to_string())
-//                     .collect(),
-//                 toml_keys
-//                     .get("download_size")
-//                     .unwrap()
-//                     .as_integer()
-//                     .unwrap(),
-//                 toml_keys.get("install_size").unwrap().as_integer().unwrap(),
-//             ));
-//             scripts.push(package);
-//         }
-//         print!("\n");
-
-//         println!("Packages to install: \n \t");
-//         let mut download_size: i64 = 0;
-//         let mut install_size: i64 = 0;
-//         let mut is_installed: String = "".into();
-
-//         for package in &packages {
-//             let path = format!(
-//                 "/home/{}/Apps/{}",
-//                 current_user,
-//                 package.name.trim_matches('"')
-//             );
-//             match Path::new(&path).try_exists() {
-//                 Ok(true) => is_installed = "[Installed]".bright_cyan().to_string(),
-//                 Ok(false) => {}
-//                 Err(e) => println!(
-//                     "Caught error {} when checking to see if a package was installed!",
-//                     e
-//                 ),
-//             }
-//             let package_version = package.version.trim_matches('"').purple().bold();
-//             if package.dependencies.is_empty() {
-//                 println!(
-//                     "{}{} {}-{}:{} [{}] {} \n",
-//                     "=".blue(),
-//                     ">".green(),
-//                     package.name.to_string().trim_matches('"').purple().bold(),
-//                     format!("{package_version}"),
-//                     package.branch,
-//                     package.arch,
-//                     is_installed,
-//                 )
-//             } else {
-//                 println!(
-//                     "{}{} {}-{}:{} [{}] {} \n{}{} (requires packages {}) \n",
-//                     "=".blue(),
-//                     ">".green(),
-//                     package.name.to_string().trim_matches('"').purple().bold(),
-//                     format!("{package_version}"),
-//                     package.branch,
-//                     package.arch,
-//                     is_installed,
-//                     "==".blue(),
-//                     ">".green(),
-//                     package.dependencies.join(" "),
-//                 );
-//             }
-//             download_size += package.download_size;
-//             install_size += package.install_size;
-//         }
-
-//         println!(
-//             "Download size: {} MB \t Install size: {} MB [Took {:?}]",
-//             download_size.to_string().green().bold(),
-//             install_size.to_string().blue().bold(),
-//             time.elapsed()
-//         );
-
-//         let confirm_package_install: Result<bool, std::io::Error> =
-//             confirm_prompt_custom(String::from("Install these packages?"));
-//         match confirm_package_install {
-//             Ok(true) => {
-//                 let mut count = 0;
-//                 println!("[1/5] Downloading packages");
-//                 for package in packages {
-
-//                     get_source(package.url.to_string(), package.name.to_string()).unwrap();
-//                     count += 1;
-
-//                 }
-//                 println!("[2/5] Verifying checksums");
-
-//                 // for script in scripts.clone() {
-//                 //     println!("{script}");
-//                 //     let bar = ProgressBar::new(count);
-//                 //     if verify_checksums(&Path::new(&script)) {
-//                 //         bar.inc(1)
-//                 //     } else {
-//                 //         panic!("A checksum was unable to be verified correctly. The file may be corrupted or malicious.");
-//                 //     }
-//                 // }
-//                 println!("[3/5] Running build scripts");
-//                 for script in scripts { read_build_script(script); }
-
-//                 println!("[4/5] Running post-install modules");
-//                 // TODO do this
-//                 println!("[5/5] Creating .desktop files and adding to $PATH");
-//                 // TODO this too
-//             }
-//             Ok(false) => println!(
-//                 "{}",
-//                 "Cancelled install".yellow()
-//             ),
-//             Err(e) => eprintln!("Caught exception {} when registering confirm prompt.", e),
-//         }
-
-//     }
-//     Ok(())
-// }
 
 /// Sub-function of install_package that creates the package's directory and begins the download.
 fn get_source(
@@ -505,22 +325,6 @@ pub fn collect_input(matches: &ArgMatches) -> Vec<&str> {
         .map(|s| s.as_str())
         .collect();
     packages
-}
-fn read_toml(file: String) -> String {
-    let path = Path::new(&file);
-    let display = path.display();
-
-    let mut file = match File::open(path) {
-        Ok(file) => file,
-        Err(e) => panic!("Could not open File {}", e),
-    };
-    let mut string = String::new();
-    match file.read_to_string(&mut string) {
-        Err(why) => panic!("couldn't read {}: {}", display, why),
-        Ok(_) => {}
-    }
-
-    string
 }
 
 #[cfg(tests)]

@@ -162,7 +162,7 @@ use std::io::Read;
 /// ```
 pub fn get_toml_keys(
     file: String,
-    is_file: bool,
+    is_file: bool, 
 ) -> Result<toml::Value, Box<dyn std::error::Error>> {
     let mut string = String::new();
     if is_file {
@@ -174,10 +174,7 @@ pub fn get_toml_keys(
             Err(e) => panic!("Could not open File {}", e),
         };
 
-        match file.read_to_string(&mut string) {
-            Err(why) => panic!("couldn't read {}: {}", display, why),
-            Ok(_) => {}
-        }
+        if let Err(why) = file.read_to_string(&mut string) { panic!("couldn't read {}: {}", display, why) }
     } else {
         string = file;
     }
