@@ -15,7 +15,10 @@ Cargo.lock
 *.pdb
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 98d5d1c2d1e1147eb6a73f5a86bc52ad3e964a80
 # ---> Go
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
@@ -39,4 +42,7 @@ Cargo.lock
 # Go workspace file
 go.work
 
+<<<<<<< HEAD
 >>>>>>> 549285356050b59236edcc467b0a24007beb9dec
+=======
+>>>>>>> 98d5d1c2d1e1147eb6a73f5a86bc52ad3e964a80
