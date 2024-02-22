@@ -34,18 +34,6 @@ impl Repo {
                 packages.push(package)
             }
         }
-        let mut dups = Vec::new();
-        for i in 0..packages.len() {
-            for j in 0..packages.len() {
-                println!("{} {}", packages[i].name, packages[j].name);
-                println!("{} {}", packages[i].repo, packages[j].repo);
-                if packages[i].name == packages[j].name && packages[i].repo != packages[j].repo {
-                    dups.push(packages[j].clone());
-                }
-            }
-        }
-        println!("{dups:?}");
-        collect_dups(dups);
         packages
     }
 
@@ -59,10 +47,5 @@ impl Repo {
             }
         }
         packages
-    }
-}
-fn collect_dups(pkgs: Vec<Package>) {
-    for pkg in pkgs {
-        println!("{}", pkg.name)
     }
 }

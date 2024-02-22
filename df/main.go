@@ -1,12 +1,22 @@
 package main
 
 import (
-	"github.com/schollz/progressbar/v3"
-	"io"
-	"net/http"
-	"os"
+	"flag"
+	"fmt"
+	//"io"
+	//"net/http"
+	//"os"
+	//"github.com/schollz/progressbar/v3"
 )
 
-func main() {
+type FileDownload struct {
+	name string
+	url  string
+}
 
+func main() {
+	flags := flag.CommandLine.Args()
+	for i := 0; i < len(flags); i++ {
+		fmt.Println(flags[i])
+	}
 }

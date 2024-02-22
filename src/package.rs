@@ -12,7 +12,6 @@ pub async fn download_file(
     url: &str,
     path: &str,
     name: ColoredString,
-    multiprogress: &indicatif::MultiProgress,
 ) -> Result<(), anyhow::Error> {
     // Remove quotes from the string ("string" -> string)
     let url = url.trim_matches('"');
@@ -41,7 +40,7 @@ pub async fn download_file(
         spaces.remove(0);
     }
     // Create a progress bar with the total size of the file
-    let pb = multiprogress.add(ProgressBar::new(total_size));
+    let pb = ProgressBar::new(total_size);
     pb.set_style(
         ProgressStyle::with_template(
             "{msg}[{elapsed_precise}] [{bar:25.cyan/blue}] {bytes}/{total_bytes}",
@@ -95,9 +94,9 @@ impl Package {
         let package_script = crate::config::get_appl_dir("scripts/").unwrap();
         let pscript = format!("{}{}/{}.lua", package_script, self.repo, self.name);
         let contents = std::fs::read_to_string(&pscript).unwrap();
+
         let lua = Lua::new();
         let globals = lua.globals();
-        let mp = indicatif::MultiProgress::new();
 
         globals.set("pkgname", self.name.clone())?;
         globals.set("pkgver", self.version.clone())?;
@@ -106,7 +105,7 @@ impl Package {
             let pathbuf = PathBuf::from(url.clone());
             let path = pathbuf.file_name();
             let path = path.unwrap().to_str().unwrap();
-            let _result = download_file(&url, path, name.into(), &mp);
+            let _result = download_file(&url, path, name.into());
             Ok(())
         })?;
         globals.set("download", download)?;

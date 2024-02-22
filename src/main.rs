@@ -3,7 +3,9 @@ pub mod cmd;
 pub mod config;
 pub mod db;
 pub mod input;
+pub mod log;
 pub mod package;
+pub mod setup;
 pub mod table;
 #[derive(Clone, Debug)]
 pub struct ApplInstance {
@@ -30,7 +32,5 @@ async fn main() {
     let appl = ApplInstance {
         repos: db::Repo::init(),
     };
-
-    // Create a MultiProgressBar and wrap it in a Box
     cmd::builder(appl).await;
 }
