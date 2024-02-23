@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 use crate::config::{get_config_table, get_config_value};
 use crate::package::Package;
 use colored::Colorize;
@@ -8,16 +7,6 @@ use stanza::renderer::Renderer;
 use stanza::style::{HAlign, Header, MaxWidth, MinWidth, Palette16, Styles, TextFg};
 use stanza::table::{Cell, Col, Row, Table};
 pub fn install_search(pkgs: Vec<Package>) {
-=======
-use crate::config::get_config_value;
-use crate::package::Package;
-use stanza::renderer::console::Console;
-use stanza::renderer::markdown::Markdown;
-use stanza::renderer::Renderer;
-use stanza::style::{HAlign, Header, MinWidth, Palette16, Styles, TextFg};
-use stanza::table::{Cell, Col, Row, Table};
-pub fn render_package_table(pkgs: Vec<Package>) {
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
     let mut table = Table::default()
         .with_cols(vec![
             Col::new(Styles::default().with(MinWidth(12)).with(HAlign::Left)),
@@ -70,20 +59,13 @@ fn build_body_rows(pkgs: Vec<Package>) -> Vec<Row> {
             );
             cells.push(version_cell);
 
-<<<<<<< HEAD
             let mut download = pkgs
-=======
-            let download = pkgs
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
                 .get(row - 1)
                 .unwrap()
                 .download
                 .to_string()
                 .replace('"', "");
-<<<<<<< HEAD
             download.push_str(" MiB");
-=======
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
             let download_cell = Cell::new(
                 Styles::default()
                     .with(TextFg(Palette16::Blue))
@@ -96,7 +78,6 @@ fn build_body_rows(pkgs: Vec<Package>) -> Vec<Row> {
         })
         .collect()
 }
-<<<<<<< HEAD
 pub fn rough_search(pkgs: Vec<Package>) {
     for package in pkgs {
         println!(
@@ -110,5 +91,3 @@ pub fn rough_search(pkgs: Vec<Package>) {
         println!("\t {}", package.desc.bold());
     }
 }
-=======
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143

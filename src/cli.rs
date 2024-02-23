@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 use colored::Colorize;
 pub async fn install_package(pkg: Vec<&str>, appl: &crate::ApplInstance) {
     let time = std::time::Instant::now();
@@ -36,10 +35,11 @@ pub async fn search_package(pkg: Vec<&str>, appl: &crate::ApplInstance) {
         packages.extend(appl.clone().search(search));
     }
     if packages.len() == 0 {
-        println!("{}","No results found.".bold());
+        println!("{}", "No results found.".bold());
     } else {
-        crate::table::rough_search(packages.clone());    
-=======
+        crate::table::rough_search(packages.clone());
+    }
+}
 pub fn install_package(pkg: &str, appl: crate::ApplInstance) {
     let mut avg = Vec::new();
     let time = std::time::Instant::now();
@@ -60,6 +60,5 @@ pub fn install_package(pkg: &str, appl: crate::ApplInstance) {
     } else {
         println!("Cancelled");
         std::process::exit(0);
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
     }
 }
