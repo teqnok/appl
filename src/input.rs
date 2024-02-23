@@ -19,7 +19,6 @@ pub fn confirm_prompt_simple<T: ToString>(prompt: T) -> bool {
         Err(_) => false,
     }
 }
-<<<<<<< HEAD
 
 pub fn input_prompt<T: ToString + Clone>(prompt: T, default: T) -> String {
     let input = dialoguer::Input::<String>::with_theme(&ColorfulTheme::default())
@@ -30,8 +29,6 @@ pub fn input_prompt<T: ToString + Clone>(prompt: T, default: T) -> String {
     input
 }
 
-=======
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
 pub fn select_prompt<T: ToString + Clone>(prompt: T, options: Vec<T>) -> T {
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt(prompt.to_string())
@@ -43,7 +40,6 @@ pub fn select_prompt<T: ToString + Clone>(prompt: T, options: Vec<T>) -> T {
         Err(_) => options[0].clone(),
     }
 }
-<<<<<<< HEAD
 pub fn select_prompt_simple<T: ToString + Clone>(prompt: T, options: Vec<T>) -> T {
     let selection = Select::new()
         .with_prompt(prompt.to_string())
@@ -55,5 +51,3 @@ pub fn select_prompt_simple<T: ToString + Clone>(prompt: T, options: Vec<T>) -> 
         Err(_) => options[0].clone(),
     }
 }
-=======
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143

@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-<<<<<<< HEAD
 anyhow = "1.0.79"
 clap = "4.4.18"
 colored = "2.1.0"
@@ -16,14 +15,6 @@ indicatif = "0.17.7"
 lazy_static = "1.4.0"
 mlua = { version = "0.9.5", features = ["lua54"] }
 reqwest = { version = "0.11.24", features = ["stream"] }
-=======
-clap = "4.4.18"
-colored = "2.1.0"
-dialoguer = "0.11.0"
-indicatif = "0.17.7"
-mlua = { version = "0.9.5", features = ["lua54"] }
-reqwest = "0.11.24"
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
 serde = { version = "1.0.196", features = ["derive"] }
 stanza = "0.5.1"
 tokio = { version = "1.36.0", features = ["full"] }

@@ -42,11 +42,7 @@ impl Repo {
     pub fn search<T: ToString>(self, term: T) -> Vec<Package> {
         let mut packages = Vec::new();
         for package in self.packages {
-<<<<<<< HEAD
             if package.name.contains(&term.to_string()) || package.desc.to_lowercase().contains(&term.to_string()) {
-=======
-            if package.name.contains(&term.to_string()) {
->>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
                 packages.push(package)
             }
         }
