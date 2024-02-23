@@ -90,7 +90,6 @@ pub async fn builder(appl: crate::ApplInstance) {
                     println!("Query subcommand not found.")
                 }
             }
-            crate::cli::install_package(args[0].into(), &appl);
         }
         _ => {
             println!("Command not found.")

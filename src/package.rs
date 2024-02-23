@@ -77,7 +77,6 @@ pub async fn download_file(
     Ok(())
 }
 
-use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Package {
     pub name: String,
