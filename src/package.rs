@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 use anyhow::Result;
 use colored::ColoredString;
 use colored::Colorize;
@@ -77,6 +78,10 @@ pub async fn download_file(
     Ok(())
 }
 
+=======
+use mlua::prelude::*;
+use serde::{Deserialize, Serialize};
+>>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Package {
     pub name: String,
@@ -92,11 +97,16 @@ pub struct Package {
 
 impl Package {
     /// Backend silent function for installing a package.
+<<<<<<< HEAD
     pub async fn install(self) -> Result<(), LuaError> {
+=======
+    pub fn install(&self) -> u32 {
+>>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
         let package_script = crate::config::get_appl_dir("scripts/").unwrap();
         let pscript = format!("{}{}/{}.lua", package_script, self.repo, self.name);
         let contents = std::fs::read_to_string(&pscript).unwrap();
         let lua = Lua::new();
+<<<<<<< HEAD
         let globals = lua.globals();
 
         globals.set("pkgname", self.name.clone())?;
@@ -128,5 +138,13 @@ async fn handle_sources(sources: Vec<String>) {
         let path = PathBuf::from(&source);
         let name = path.file_name().unwrap().to_str().unwrap();
         download_file(&source, name, name.into()).await;
+=======
+        lua.create_table().unwrap();
+        let globals = lua.globals();
+        globals.set("pkgname", self.name.clone()).unwrap();
+        globals.set("pkgver", self.version.clone()).unwrap();
+        lua.load(contents).exec().unwrap();
+        1
+>>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
     }
 }

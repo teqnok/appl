@@ -1,5 +1,9 @@
 use clap::{Arg, ArgAction, ArgMatches, Command};
+<<<<<<< HEAD
 pub async fn builder(appl: crate::ApplInstance) {
+=======
+pub fn builder(appl: crate::ApplInstance) {
+>>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
     let matches = Command::new("appl")
         .about("Portable package manager")
         .version("0.6.2-alpha")
@@ -46,6 +50,7 @@ pub async fn builder(appl: crate::ApplInstance) {
         // Query subcommand
         .subcommand(
             Command::new("query")
+<<<<<<< HEAD
                 .short_flag('Q')
                 .arg_required_else_help(true)
                 .about("Show information about the given package")
@@ -54,6 +59,12 @@ pub async fn builder(appl: crate::ApplInstance) {
                         .short_flag('i')
                         .arg_required_else_help(true)
                         .about("View information about a package")
+=======
+                .about("Show information about the given package")
+                .subcommand(
+                    Command::new("gen_hash")
+                        .about("Generate a SHA2-256 hash using the package's source")
+>>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
                         .arg(Arg::new("package").index(1).action(ArgAction::Set)),
                 )
                 .subcommand(
@@ -63,8 +74,11 @@ pub async fn builder(appl: crate::ApplInstance) {
                 )
                 .subcommand(
                     Command::new("search")
+<<<<<<< HEAD
                         .short_flag('s')
                         .arg_required_else_help(true)
+=======
+>>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
                         .about("Search for a package")
                         .arg(Arg::new("package").index(1).action(ArgAction::Set)),
                 )
@@ -74,6 +88,7 @@ pub async fn builder(appl: crate::ApplInstance) {
     match matches.subcommand() {
         Some(("install", install_matches)) => {
             let args = collect_input(install_matches);
+<<<<<<< HEAD
             crate::cli::install_package(args, &appl).await;
         },
         Some(("query", q)) => {
@@ -90,6 +105,9 @@ pub async fn builder(appl: crate::ApplInstance) {
                     println!("Query subcommand not found.")
                 }
             }
+=======
+            crate::cli::install_package(args[0].into(), appl);
+>>>>>>> 90a997964089276d576c30b1c142cf1ab0495143
         }
         _ => {
             println!("Command not found.")
