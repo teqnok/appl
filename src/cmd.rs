@@ -50,8 +50,10 @@ pub async fn builder(appl: crate::ApplInstance) {
                 .arg_required_else_help(true)
                 .about("Show information about the given package")
                 .subcommand(
-                    Command::new("gen_hash")
-                        .about("Generate a SHA2-256 hash using the package's source")
+                    Command::new("info")
+                        .short_flag('i')
+                        .arg_required_else_help(true)
+                        .about("View information about a package")
                         .arg(Arg::new("package").index(1).action(ArgAction::Set)),
                 )
                 .subcommand(
@@ -79,6 +81,10 @@ pub async fn builder(appl: crate::ApplInstance) {
                 Some(("search", search_matches)) => {
                     let args = collect_input(search_matches);
                     crate::cli::search_package(args, &appl).await;
+                }
+                Some(("info", info_matches)) => {
+                    let args = collect_input(info_matches);
+                    // crate::cli::info_package(args, &appl).await;
                 }
                 _ => {
                     println!("Query subcommand not found.")

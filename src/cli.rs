@@ -5,6 +5,7 @@ pub async fn install_package(pkg: Vec<&str>, appl: &crate::ApplInstance) {
     for search in pkg {
         packages.extend(appl.clone().search_exact(search));
     }
+    println!("{packages:?}");
     if packages.len() == 0 {
         println!("{} (Took {:?})", "No results found.".bold(), time.elapsed());
     } else {
@@ -33,5 +34,9 @@ pub async fn search_package(pkg: Vec<&str>, appl: &crate::ApplInstance) {
     for search in pkg {
         packages.extend(appl.clone().search(search));
     }
-    crate::table::rough_search(packages.clone());
+    if packages.len() == 0 {
+        println!("{}","No results found.".bold());
+    } else {
+        crate::table::rough_search(packages.clone());    
+    }
 }

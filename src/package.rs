@@ -15,7 +15,7 @@ pub async fn download_file(
 ) -> Result<(), anyhow::Error> {
     // Remove quotes from the string ("string" -> string)
     let url = url.trim_matches('"');
-    let name = name.trim_matches('"');
+    let mut name = name.trim_matches('"').to_string();
     // Create a reqwest client
     let client = reqwest::Client::new();
     let new_path = PathBuf::from(path);
@@ -31,7 +31,10 @@ pub async fn download_file(
     // If there is no Content-Length (GitHub doesn't provide one sometimes), indicatif will report a size of 0.
     // TODO see if fixable
     // Align the progress bar with the package name, for prettiness. If the package name is longer
-
+    if name.len() >= 15 {
+        name.truncate(12);
+        name.push_str("...");
+    }
     let mut spaces = " ".repeat(15);
     for _ in 1..=name.len() {
         if spaces.len() == 0 {
@@ -49,9 +52,8 @@ pub async fn download_file(
         .progress_chars("󰹞 "),
     );
     pb.set_message(format!(
-        "{}{} {}{}",
-        "=".blue(),
-        ">".green(),
+        "{} {}{}",
+        "=>".green(),
         name.bold().green(),
         spaces
     ));
@@ -94,7 +96,6 @@ impl Package {
         let package_script = crate::config::get_appl_dir("scripts/").unwrap();
         let pscript = format!("{}{}/{}.lua", package_script, self.repo, self.name);
         let contents = std::fs::read_to_string(&pscript).unwrap();
-
         let lua = Lua::new();
         let globals = lua.globals();
 
@@ -109,15 +110,23 @@ impl Package {
             Ok(())
         })?;
         globals.set("download", download)?;
-        lua.load(contents).exec()?;
+        println!("{:#?}", lua.load(contents).exec());
         let sources: mlua::Table = globals.get("sources")?;
-        let _sources_vec_owned: Vec<String> = sources
+        let sources_vec_owned: Vec<String> = sources
             .sequence_values::<mlua::Value>()
             .filter_map(|v| match v {
                 Ok(val) => Some(val.to_string()),
                 Err(_) => None,
             })
             .collect::<Result<Vec<_>, _>>()?;
+        handle_sources(sources_vec_owned).await;
         Ok(())
+    }
+}
+async fn handle_sources(sources: Vec<String>) {
+    for source in sources {
+        let path = PathBuf::from(&source);
+        let name = path.file_name().unwrap().to_str().unwrap();
+        download_file(&source, name, name.into()).await;
     }
 }
