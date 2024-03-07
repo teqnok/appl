@@ -75,22 +75,20 @@ pub async fn builder(appl: crate::ApplInstance) {
         Some(("install", install_matches)) => {
             let args = collect_input(install_matches);
             crate::cli::install_package(args, &appl).await;
-        },
-        Some(("query", q)) => {
-            match q.subcommand() {
-                Some(("search", search_matches)) => {
-                    let args = collect_input(search_matches);
-                    crate::cli::search_package(args, &appl).await;
-                }
-                Some(("info", info_matches)) => {
-                    let args = collect_input(info_matches);
-                    // crate::cli::info_package(args, &appl).await;
-                }
-                _ => {
-                    println!("Query subcommand not found.")
-                }
-            }
         }
+        Some(("query", q)) => match q.subcommand() {
+            Some(("search", search_matches)) => {
+                let args = collect_input(search_matches);
+                crate::cli::search_package(args, &appl).await;
+            }
+            Some(("info", info_matches)) => {
+                let args = collect_input(info_matches);
+                crate::cli::get_pkg_info(args, &appl).await;
+            }
+            _ => {
+                println!("Query subcommand not found.")
+            }
+        },
         _ => {
             println!("Command not found.")
         }

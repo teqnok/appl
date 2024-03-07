@@ -101,25 +101,8 @@ impl Package {
 
         globals.set("pkgname", self.name.clone())?;
         globals.set("pkgver", self.version.clone())?;
-        let download = lua.create_function(move |_, url: String| {
-            let name = self.name.clone();
-            let pathbuf = PathBuf::from(url.clone());
-            let path = pathbuf.file_name();
-            let path = path.unwrap().to_str().unwrap();
-            let _result = download_file(&url, path, name.into());
-            Ok(())
-        })?;
-        globals.set("download", download)?;
-        println!("{:#?}", lua.load(contents).exec());
-        let sources: mlua::Table = globals.get("sources")?;
-        let sources_vec_owned: Vec<String> = sources
-            .sequence_values::<mlua::Value>()
-            .filter_map(|v| match v {
-                Ok(val) => Some(val.to_string()),
-                Err(_) => None,
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-        handle_sources(sources_vec_owned).await;
+        lua.load(&contents).exec()?;
+        handle_sources(globals.get::<_, Vec<String>>("sources")?).await;
         Ok(())
     }
 }
