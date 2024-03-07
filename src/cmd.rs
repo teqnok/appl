@@ -37,10 +37,11 @@ pub async fn builder(appl: crate::ApplInstance) {
         .subcommand(
             Command::new("run")
                 .about("Execute/open a specified package")
+                .arg_required_else_help(true)
                 .long_about(
                     "May have to infer what to open a file with, and may not work with mods.",
                 )
-                .arg(Arg::new("")),
+                .arg(Arg::new("package").index(1).action(ArgAction::Set)),
         )
         .subcommand(Command::new("setup").about("Enter the applsetup tool"))
         // Query subcommand
@@ -76,6 +77,10 @@ pub async fn builder(appl: crate::ApplInstance) {
             let args = collect_input(install_matches);
             crate::cli::install_package(args, &appl).await;
         }
+        Some(("run", run_matches)) => {
+            let args = collect_input(run_matches);
+            crate::cli::run_package(args, &appl).await;
+        },
         Some(("query", q)) => match q.subcommand() {
             Some(("search", search_matches)) => {
                 let args = collect_input(search_matches);

@@ -6,7 +6,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 use mlua::prelude::*;
 use reqwest::header::CONTENT_LENGTH;
 use serde::{Deserialize, Serialize};
+use std::process::Command;
 use std::{io::Write, path::PathBuf};
+
+use crate::log;
 
 pub async fn download_file(
     url: &str,
@@ -91,7 +94,7 @@ pub struct Package {
 }
 
 impl Package {
-    /// Backend silent function for installing a package.
+    /// Backend function for installing a package.
     pub async fn install(self) -> Result<(), LuaError> {
         let package_script = crate::config::get_appl_dir("scripts/").unwrap();
         let pscript = format!("{}{}/{}.lua", package_script, self.repo, self.name);
@@ -101,8 +104,35 @@ impl Package {
 
         globals.set("pkgname", self.name.clone())?;
         globals.set("pkgver", self.version.clone())?;
+        let exec = lua.create_function(move |_, (path, args): (String, Vec<String>)| {
+            Command::new(path).args(args).spawn()?;
+            Ok(())
+        })?;
+        globals.set("exec", exec)?;
+
         lua.load(&contents).exec()?;
         handle_sources(globals.get::<_, Vec<String>>("sources")?).await;
+        println!("{}", "==> Building package...".green());
+        lua.load("build()").exec()?;
+        Ok(())
+    }
+    pub async fn run(self) -> Result<(), LuaError> {
+        let package_script = crate::config::get_appl_dir("scripts/").unwrap();
+        let pscript = format!("{}{}/{}.lua", package_script, self.repo, self.name);
+        let contents = std::fs::read_to_string(&pscript).unwrap();
+        let lua = Lua::new();
+        let globals = lua.globals();
+        globals.set("pkgname", self.name.clone())?;
+        globals.set("pkgver", self.version.clone())?;
+        let exec = lua.create_function(move |_, (path, args): (String, Vec<String>)| {
+            Command::new(path).args(args).spawn()?.wait_with_output();
+            Ok(())
+        })?;
+        
+        globals.set("exec", exec)?;
+
+        lua.load(&contents).exec()?;
+        lua.load("run()").exec()?;
         Ok(())
     }
 }

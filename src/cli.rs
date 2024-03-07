@@ -28,6 +28,16 @@ pub async fn install_package(pkg: Vec<&str>, appl: &crate::ApplInstance) {
         }
     }
 }
+pub async fn run_package(pkg: Vec<&str>,appl: &crate::ApplInstance)  {
+    
+    let package = appl.clone().search_exact(pkg[0]);
+    if package.is_empty() {
+        println!("{}", "No results found.".bold());
+    } else {
+        let found = package[0].clone();
+        found.run().await;
+    }
+}
 pub async fn get_pkg_info(pkg: Vec<&str>, appl: &crate::ApplInstance) {
     let package = appl.clone().search_exact(pkg[0]);
     if package.is_empty() {
