@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::process::Command;
 use std::{io::Write, path::PathBuf};
 
+use crate::config::get_appl_dir;
 use crate::log;
 
 pub async fn download_file(
@@ -104,6 +105,8 @@ impl Package {
 
         globals.set("pkgname", self.name.clone())?;
         globals.set("pkgver", self.version.clone())?;
+        globals.set("appldir", get_appl_dir(""))?;
+        globals.set("tmpdir", get_appl_dir("tmp/"))?;
         let exec = lua.create_function(move |_, (path, args): (String, Vec<String>)| {
             Command::new(path).args(args).spawn()?;
             Ok(())
@@ -116,6 +119,7 @@ impl Package {
         lua.load("build()").exec()?;
         Ok(())
     }
+
     pub async fn run(self) -> Result<(), LuaError> {
         let package_script = crate::config::get_appl_dir("scripts/").unwrap();
         let pscript = format!("{}{}/{}.lua", package_script, self.repo, self.name);
@@ -128,7 +132,7 @@ impl Package {
             Command::new(path).args(args).spawn()?.wait_with_output();
             Ok(())
         })?;
-        
+
         globals.set("exec", exec)?;
 
         lua.load(&contents).exec()?;
@@ -140,6 +144,7 @@ async fn handle_sources(sources: Vec<String>) {
     for source in sources {
         let path = PathBuf::from(&source);
         let name = path.file_name().unwrap().to_str().unwrap();
-        download_file(&source, name, name.into()).await;
+        println!("{:#?}", format!("{}{name}", get_appl_dir("tmp/").unwrap_or("a".to_string())).as_str());
+        download_file(&source, format!("{}{name}", get_appl_dir("tmp/").unwrap_or("a".to_string())).as_str(), name.into()).await;
     }
 }
