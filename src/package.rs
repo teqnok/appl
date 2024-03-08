@@ -76,7 +76,6 @@ pub async fn download_file(
     }
     // Finish the progress bar
     pb.finish();
-    println!("h");
 
     Ok(())
 }
@@ -144,7 +143,11 @@ async fn handle_sources(sources: Vec<String>) {
     for source in sources {
         let path = PathBuf::from(&source);
         let name = path.file_name().unwrap().to_str().unwrap();
-        println!("{:#?}", format!("{}{name}", get_appl_dir("tmp/").unwrap_or("a".to_string())).as_str());
-        download_file(&source, format!("{}{name}", get_appl_dir("tmp/").unwrap_or("a".to_string())).as_str(), name.into()).await;
+        download_file(
+            &source,
+            format!("{}{name}", get_appl_dir("tmp/").unwrap_or("a".to_string())).as_str(),
+            name.into(),
+        )
+        .await;
     }
 }

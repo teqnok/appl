@@ -19,8 +19,15 @@ pub async fn install_package(pkg: Vec<&str>, appl: &crate::ApplInstance) {
         if confirm {
             for package in packages.iter() {
                 println!("Installing {}", package.name);
-                let _install = package.clone().install();
-                println!("{:?}", _install.await);
+                let _install = package.clone().install().await;
+                if _install.is_err() {
+                    println!(
+                        "[{}] Failed to install {}",
+                        "ERROR".red().bold(),
+                        package.name
+                    );
+                    println!("Error caught: \n{}", _install.err().unwrap());
+                }
             }
         } else {
             println!("Cancelled");
@@ -28,8 +35,7 @@ pub async fn install_package(pkg: Vec<&str>, appl: &crate::ApplInstance) {
         }
     }
 }
-pub async fn run_package(pkg: Vec<&str>,appl: &crate::ApplInstance)  {
-    
+pub async fn run_package(pkg: Vec<&str>, appl: &crate::ApplInstance) {
     let package = appl.clone().search_exact(pkg[0]);
     if package.is_empty() {
         println!("{}", "No results found.".bold());
